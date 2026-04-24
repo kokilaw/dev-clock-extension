@@ -13,6 +13,57 @@ Feature: LogTime Sync popup conversions
     And the converted date should be "Tue, 11 Jun 2024"
     And the copy action buttons should be enabled
 
+  Scenario: Handle time-only input (Implicit Today)
+    When I enter the timestamp "14:30"
+    Then the result should be calculated using today's date
+    And the converted AU time should be displayed
+
+  Scenario: Handle timezone-less input with a Toggle
+    Given the input is "09:00" (no timezone)
+    When I select the source timezone "UTC"
+    And I note the current converted ISO value
+    And I click the "US/Eastern" toggle
+    Then the AU result should update to reflect a conversion from New York time
+    And the Splunk query should update its time range accordingly
+
+  Scenario: Parse military time without colons
+    When I enter the timestamp "1545"
+    Then it should be correctly interpreted as "3:45 PM"
+    And the result card should be visible
+
+  Scenario: Parse Unix Epoch (The Clipboard Special)
+    When I enter the timestamp "1714012233"
+    Then it should be treated as a Unix Epoch
+    And the result should show the human-readable AU time for that exact second
+
+  Scenario: Parse ISO-8601 with Milliseconds
+    When I enter the timestamp "2026-04-25T04:15:22.455Z"
+    Then the Splunk copy output should contain the exact timestamp
+    And the Splunk copy output should use a ±1 minute range around that second
+
+  Scenario: Handle Z (UTC) suffix independent of source toggle
+    When I enter the timestamp "2026-04-25 04:15Z"
+    And I note the current converted ISO value
+    And I click the "US/Eastern" toggle
+    Then the converted ISO should remain unchanged
+
+  Scenario: Handle invalid input gracefully
+    When I enter the timestamp "Meeting with Bob"
+    Then the result card should not be visible
+    And the parse error message "Unable to parse date" should be visible
+
+  Scenario: Handle Daylight Savings Cross-over
+    When I enter the timestamp "October 30th 2pm"
+    Then the offset difference should reflect +15 hours
+
+  Scenario: Auto-focus on Open
+    Then the input field should have focus automatically
+
+  Scenario: Persistent Toggle State
+    Given I select the source timezone "UK/London"
+    When I close and re-open the extension popup
+    Then "UK/London" should still be the active toggle
+
   Scenario: Interpret naive ISO using selected source timezone
     When I select the source timezone "UTC"
     And I enter the timestamp "2024-06-10T14:30:00"

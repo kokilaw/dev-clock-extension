@@ -106,6 +106,16 @@ function parseTimestamp(raw, sourceTz) {
     return { millis: parseInt(str, 10) };
   }
 
+  // 2.5 — 4-digit military time (e.g. "1545") — route directly to natural parser
+  //        to avoid Luxon interpreting it as year 1545 via fromISO
+  if (/^\d{4}$/.test(str)) {
+    const actualZoneEarly = sourceTz === "LOCAL" ? Luxon.DateTime.local().zoneName : sourceTz;
+    const nowEarly = Luxon.DateTime.now().setZone(actualZoneEarly);
+    const militaryDT = parseNaturalTimestamp(str, nowEarly, actualZoneEarly);
+    if (militaryDT) return { millis: militaryDT.toMillis() };
+    return { error: `Unable to parse date: "${str}"` };
+  }
+
   // 3 — ISO 8601 (with or without timezone info)
   const isoAttempt = Luxon.DateTime.fromISO(str);
   if (isoAttempt.isValid) {
@@ -125,7 +135,7 @@ function parseTimestamp(raw, sourceTz) {
   const natural     = parseNaturalTimestamp(str, nowInSource, actualZone);
   if (natural) return { millis: natural.toMillis() };
 
-  return { error: `Cannot parse: "${str}"` };
+  return { error: `Unable to parse date: "${str}"` };
 }
 
 function parseNaturalTimestamp(raw, nowInSource, zone) {
@@ -153,6 +163,23 @@ function parseNaturalTimestamp(raw, nowInSource, zone) {
     return applyParsedTime(nowInSource.startOf("day"), timeOnly, zone);
   }
 
+  // Month DDth [timePart] — e.g. "October 30th 2pm"
+  const MONTHS = {
+    january:1,february:2,march:3,april:4,may:5,june:6,
+    july:7,august:8,september:9,october:10,november:11,december:12,
+  };
+  const monthDayMatch = normalized.match(
+    /^(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s+at)?(?:\s+(.+))?$/i
+  );
+  if (monthDayMatch) {
+    const [, monthName, dayStr, timePart] = monthDayMatch;
+    const month = MONTHS[monthName.toLowerCase()];
+    const day   = parseInt(dayStr, 10);
+    const year  = nowInSource.year;
+    const base  = Luxon.DateTime.fromObject({ year, month, day }, { zone });
+    if (base.isValid) return applyParsedTime(base, parseTimeOfDay(timePart), zone);
+  }
+
   return null;
 }
 
@@ -175,6 +202,14 @@ function applyParsedTime(baseDate, parsedTime, zone) {
 
 function parseTimeOfDay(raw) {
   if (!raw) return null;
+
+  // Military time without colons: 1545 → 15:45
+  const militaryMatch = raw.trim().match(/^(\d{2})(\d{2})$/);
+  if (militaryMatch) {
+    const hour   = parseInt(militaryMatch[1], 10);
+    const minute = parseInt(militaryMatch[2], 10);
+    if (hour <= 23 && minute <= 59) return { hour, minute, second: 0 };
+  }
 
   const match = raw.trim().toLowerCase().match(/^(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*([ap]m)?$/i);
   if (!match) return null;
@@ -227,7 +262,7 @@ function convertToMelbourne(millis) {
 function buildSplunkFragment(melbourneDT, windowMinutes = SPLUNK_WINDOW) {
   const from = melbourneDT.minus({ minutes: windowMinutes });
   const to   = melbourneDT.plus({  minutes: windowMinutes });
-  const fmt  = dt => dt.toISO({ suppressMilliseconds: true });
+  const fmt  = dt => dt.set({ millisecond: 0 }).toISO({ suppressMilliseconds: true });
   return `_time >= "${fmt(from)}" AND _time <= "${fmt(to)}"`;
 }
 
@@ -262,7 +297,7 @@ function showEmpty() {
 function showResult(millis) {
   const melb = convertToMelbourne(millis);
   state.parsedMillis = millis;
-  state.melbourneISO = melb.toISO({ suppressMilliseconds: true });
+  state.melbourneISO = melb.toISO({ suppressMilliseconds: true }); // clipboard copy always suppresses ms
 
   // Source time display
   const actualZone  = state.sourceTz === "LOCAL"
@@ -279,7 +314,9 @@ function showResult(millis) {
 
   // Extra info
   els.resultUnix.textContent = Math.floor(millis / 1000);
-  els.resultISO.textContent  = melb.toISO({ suppressMilliseconds: true });
+  els.resultISO.textContent  = millis % 1000 === 0
+    ? melb.toISO({ suppressMilliseconds: true })
+    : melb.toISO();
 
   // Splunk preview
   const fragment = buildSplunkFragment(melb);
@@ -380,12 +417,22 @@ function init() {
     els.input.focus();
   });
 
+  // ── Restore saved timezone ──
+  const savedTz = localStorage.getItem("sourceTz");
+  if (savedTz) {
+    state.sourceTz = savedTz;
+    document.querySelectorAll(".tz-btn").forEach(b => b.classList.remove("active"));
+    const savedBtn = document.querySelector(`.tz-btn[data-tz="${savedTz}"]`);
+    if (savedBtn) savedBtn.classList.add("active");
+  }
+
   // ── Timezone toggles ──
   document.querySelectorAll(".tz-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".tz-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       state.sourceTz = btn.dataset.tz;
+      localStorage.setItem("sourceTz", btn.dataset.tz);
       // Re-run conversion with same input but new source tz
       runConversion();
     });
