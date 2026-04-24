@@ -2,7 +2,8 @@
 
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
-![Playwright Tested](https://img.shields.io/badge/Tested%20with-Playwright-2EAD33?logo=playwright&logoColor=white)
+![BDD Tested](https://img.shields.io/badge/BDD-Cucumber-23D96C)
+![Browser Automation](https://img.shields.io/badge/Browser%20Automation-Playwright-2EAD33?logo=playwright&logoColor=white)
 
 LogTime Sync is a compact Chrome extension popup that helps engineers convert timestamps from common source timezones (US/Eastern, UTC, UK/London, Local) into Australia/Melbourne time and generate Splunk-ready query windows.
 
@@ -16,7 +17,7 @@ When troubleshooting logs, teams often receive timestamps from mixed regions and
 - Supports multiple input styles (natural language, epoch, ISO)
 - Generates a Splunk window fragment (`±1 minute` by default)
 - Copy actions for converted time and Splunk fragment
-- Web-app style Playwright integration coverage for core scenarios
+- BDD-style `.feature` coverage with Cucumber + Playwright
 
 ## Demo / screenshot
 
@@ -89,9 +90,10 @@ This keeps development/test tooling out of the installed extension.
 - No remote CDN runtime scripts are required.
 - Core conversion logic is kept in `popup.js` helper functions for portability.
 
-## Run integration tests
+## Run integration tests (BDD / Gherkin)
 
-This repo uses Playwright to open `dist/popup.html` in a normal browser tab (web-app style) and validate behavior.
+This repo uses Cucumber (`.feature` files) with Playwright-powered browser steps.
+The tests open `dist/popup.html` in a normal browser tab and validate behavior end-to-end.
 
 1. Install dependencies:
 
@@ -104,6 +106,10 @@ This repo uses Playwright to open `dist/popup.html` in a normal browser tab (web
 3. Run tests:
 
    `npm run test:integration`
+
+Feature file location:
+
+- `tests/bdd/features/popup_conversion.feature`
 
 Covered scenarios:
 - ISO UTC conversion
@@ -123,7 +129,10 @@ log-time-sync/
 │   └── luxon.min.js
 ├── icons/
 ├── tests/
-│   └── integration/
+│   └── bdd/
+│       ├── features/
+│       ├── steps/
+│       └── support/
 ├── package.json
 └── playwright.config.js
 ```
