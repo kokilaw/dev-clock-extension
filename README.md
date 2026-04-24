@@ -54,11 +54,44 @@ Sample output:
 
 ## Supported input formats
 
-- Natural language: `3:14pm`, `09:00`, `yesterday at 5pm`, `last Monday 08:30`
-- Unix epoch seconds: `1718000000`
-- Unix epoch milliseconds: `1718000000000`
-- ISO 8601 with timezone: `2024-06-10T14:30:00Z`, `2024-06-10T09:00:00-05:00`
-- ISO 8601 without timezone (interpreted in selected source TZ): `2024-06-10T14:30:00`
+Inputs are tried in priority order until one succeeds.
+
+### Unix Epoch
+
+| Format | Example | Notes |
+|--------|---------|-------|
+| Epoch seconds (10 digits) | `1718000000` | Parsed as UTC |
+| Epoch milliseconds (13 digits) | `1718000000000` | Parsed as UTC |
+
+### ISO 8601
+
+| Format | Example | Notes |
+|--------|---------|-------|
+| UTC (`Z` suffix) | `2024-06-10T14:30:00Z` | Timezone ignored from toggle |
+| With ms + UTC | `2026-04-25T04:15:22.455Z` | Sub-second precision preserved in display |
+| With explicit offset | `2024-06-10T09:00:00-05:00` | Offset respected as-is |
+| Naive (no timezone) | `2024-06-10T14:30:00` | Interpreted in selected source timezone |
+| Space separator | `2026-04-25 04:15Z` | Luxon accepts both `T` and space |
+
+### Natural Language
+
+| Format | Example | Notes |
+|--------|---------|-------|
+| Time only (24h) | `09:00`, `14:30`, `08:30:45` | Defaults to today's date in source TZ |
+| Time only (12h AM/PM) | `3:14pm`, `9am` | Case-insensitive |
+| Military time (no colon) | `1545`, `0900` | 4-digit HHMM format |
+| Today + time | `today at 5pm`, `today 14:30` | |
+| Yesterday + time | `yesterday at 5pm` | |
+| Tomorrow + time | `tomorrow 9am` | |
+| Last weekday + time | `last Monday 08:30`, `last Friday at 3pm` | |
+| Month + day + time | `October 30th 2pm`, `January 1st 9am` | Uses current year; DST-aware |
+
+### Timezone toggle behaviour
+
+- All inputs **without** an explicit timezone are interpreted in the **selected source timezone**.
+- Inputs that carry explicit timezone information (`Z`, `±HH:MM` offset) ignore the toggle and use the declared offset.
+- Switching the toggle re-runs the conversion instantly — useful for comparing "same wall-clock time in different zones".
+- The selected timezone is persisted via `localStorage` and restored on next open.
 
 ## Tech stack
 
@@ -120,11 +153,19 @@ Feature file location:
 - `tests/bdd/features/popup_conversion.feature`
 
 Covered scenarios:
-- ISO UTC conversion
-- Naive ISO + selected source timezone
-- Unix epoch conversion + Splunk preview
-- Natural-language parsing
-- Invalid-input error behavior
+- ISO UTC conversion to Melbourne time
+- ISO 8601 with milliseconds (sub-second precision preserved)
+- Naive ISO interpreted using selected source timezone
+- Unix epoch seconds conversion + Splunk preview window
+- Time-only input defaults to today's date in source timezone
+- Military time without colons (`1545` → 15:45)
+- Natural-language: `yesterday at 5pm`, `last Monday`, `October 30th 2pm`
+- DST cross-over offset validation (Melbourne vs. source zone)
+- `Z`-suffixed input ignores source timezone toggle
+- Toggle change updates conversion and Splunk range instantly
+- Invalid input shows parse error and disables copy buttons
+- Auto-focus on popup open
+- Persistent toggle state across reload (via `localStorage`)
 
 ## Repository structure
 
