@@ -8,6 +8,7 @@ venv/
 # Playwright artifacts
 test-results/
 playwright-report/
+reports/
 
 # Build/package artifacts
 dist/

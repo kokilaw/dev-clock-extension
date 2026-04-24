@@ -5,7 +5,8 @@
   "scripts": {
     "build:extension": "node scripts/build-extension.js",
     "package:extension": "npm run build:extension && cd dist && zip -r ../log-time-sync-extension.zip .",
-    "test:integration": "npm run build:extension && cucumber-js --require tests/bdd/support/world.js --require tests/bdd/steps/**/*.js tests/bdd/features/**/*.feature"
+    "test:integration": "npm run build:extension && cucumber-js --require tests/bdd/support/world.js --require tests/bdd/steps/**/*.js tests/bdd/features/**/*.feature",
+    "test:integration:ci": "npm run build:extension && mkdir -p reports && cucumber-js --require tests/bdd/support/world.js --require tests/bdd/steps/**/*.js --format progress --format html:reports/cucumber-report.html --format json:reports/cucumber-report.json --format junit:reports/cucumber-report.xml tests/bdd/features/**/*.feature"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^11.3.0",
