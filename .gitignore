@@ -1,0 +1,19 @@
+# Node / JS
+node_modules/
+
+# Python virtual env
+.venv/
+venv/
+
+# Playwright artifacts
+test-results/
+playwright-report/
+
+# OS/editor noise
+.DS_Store
+.vscode/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

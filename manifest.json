@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "LogTime Sync",
+  "version": "1.0.0",
+  "description": "Convert US/UK/UTC timestamps to Australia/Melbourne time. Built for engineers chasing logs in Splunk.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "LogTime Sync",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+T",
+        "mac": "Command+Shift+T"
+      },
+      "description": "Open LogTime Sync"
+    }
+  },
+  "permissions": [],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

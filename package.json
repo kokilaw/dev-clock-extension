@@ -1,0 +1,11 @@
+{
+  "name": "log-time-sync",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test:integration": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.0"
+  }
+}
