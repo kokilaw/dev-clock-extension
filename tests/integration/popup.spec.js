@@ -2,7 +2,7 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { test, expect } = require('@playwright/test');
 
-const popupFile = path.resolve(__dirname, '../../popup.html');
+const popupFile = path.resolve(__dirname, '../../dist/popup.html');
 const popupUrl = pathToFileURL(popupFile).href;
 
 async function openPopup(page) {

@@ -9,6 +9,10 @@ venv/
 test-results/
 playwright-report/
 
+# Build/package artifacts
+dist/
+*.zip
+
 # OS/editor noise
 .DS_Store
 .vscode/

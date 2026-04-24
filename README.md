@@ -33,6 +33,8 @@ Add a screenshot at `docs/popup-screenshot.png`, then use:
 3. Click **Load unpacked**
 4. Select this project folder
 
+> Best practice: load `dist/` (built output) in Chrome, not the repository root.
+
 Default command shortcut:
 - Windows/Linux: `Ctrl+Shift+T`
 - macOS: `Cmd+Shift+T`
@@ -64,6 +66,23 @@ Sample output:
 - Luxon (local bundle) in `lib/luxon.min.js`
 - Chrome Extension Manifest V3 (`manifest.json`)
 
+## Build and package (recommended)
+
+Building creates a minimal extension payload in `dist/` with only runtime files required by Chrome:
+
+- `manifest.json`
+- `popup.html`
+- `popup.js`
+- `lib/luxon.min.js`
+- `icons/icon16.png`, `icons/icon48.png`, `icons/icon128.png`
+
+Commands:
+
+- Build extension output: `npm run build:extension`
+- Package zip for sharing/release: `npm run package:extension`
+
+This keeps development/test tooling out of the installed extension.
+
 ## Development notes
 
 - The popup uses local Luxon (`lib/luxon.min.js`) to stay MV3-compatible.
@@ -72,7 +91,7 @@ Sample output:
 
 ## Run integration tests
 
-This repo uses Playwright to open `popup.html` in a normal browser tab (web-app style) and validate behavior.
+This repo uses Playwright to open `dist/popup.html` in a normal browser tab (web-app style) and validate behavior.
 
 1. Install dependencies:
 
