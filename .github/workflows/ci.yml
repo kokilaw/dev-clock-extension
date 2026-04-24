@@ -3,8 +3,37 @@ name: CI
 on:
   push:
     branches: [main]
+    paths:
+      - '.github/workflows/ci.yml'
+      - 'manifest.json'
+      - 'popup.html'
+      - 'popup.js'
+      - 'lib/**'
+      - 'icons/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'package-lock.json'
   pull_request:
     branches: [main]
+    paths:
+      - '.github/workflows/ci.yml'
+      - 'manifest.json'
+      - 'popup.html'
+      - 'popup.js'
+      - 'lib/**'
+      - 'icons/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   integration-tests:
@@ -24,18 +53,42 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Run integration tests
-        run: npm run test:integration
+        run: npm run test:integration:ci
 
-      - name: Upload Playwright report
+      - name: Build extension package
+        run: npm run package:extension
+
+      - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: integration-test-reports
+          retention-days: 7
           path: |
+            reports
             playwright-report
             test-results
+          if-no-files-found: ignore
+
+      - name: Upload extension package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-package
+          retention-days: 7
+          path: log-time-sync-extension.zip
           if-no-files-found: ignore
