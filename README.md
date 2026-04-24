@@ -67,6 +67,14 @@ Sample output:
 - Luxon (local bundle) in `lib/luxon.min.js`
 - Chrome Extension Manifest V3 (`manifest.json`)
 
+### Luxon management
+
+Luxon is pinned via npm and synced automatically into `lib/luxon.min.js` during `build:extension`.
+This keeps the extension runtime local-file requirement intact while avoiding manual library drift.
+
+- Sync manually if needed: `npm run sync:luxon`
+- Upgrade Luxon: `npm install luxon@latest` (then commit `package-lock.json` and `lib/luxon.min.js`)
+
 ## Build and package (recommended)
 
 Building creates a minimal extension payload in `dist/` with only runtime files required by Chrome:

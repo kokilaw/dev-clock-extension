@@ -3,6 +3,8 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "sync:luxon": "node scripts/sync-luxon.js",
+    "prebuild:extension": "npm run sync:luxon",
     "build:extension": "node scripts/build-extension.js",
     "package:extension": "npm run build:extension && cd dist && zip -r ../log-time-sync-extension.zip .",
     "test:integration": "npm run build:extension && cucumber-js --require tests/bdd/support/world.js --require tests/bdd/steps/**/*.js tests/bdd/features/**/*.feature",
@@ -10,6 +12,7 @@
   },
   "devDependencies": {
     "@cucumber/cucumber": "^11.3.0",
-    "@playwright/test": "^1.53.0"
+    "@playwright/test": "^1.53.0",
+    "luxon": "^3.7.2"
   }
 }
