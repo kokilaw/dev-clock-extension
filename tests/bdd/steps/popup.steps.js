@@ -9,6 +9,19 @@ const TZ_SELECTORS = {
   Local: '#tz-local',
 };
 
+const DEFAULT_PREFS = {
+  schemaVersion: 1,
+  localTimezone: 'UTC',
+  sourceTimezones: ['America/New_York', 'UTC', 'Europe/London', 'LOCAL'],
+  activeSourceTimezone: 'America/New_York',
+  queryProvider: 'splunk',
+  hourFormat: '24h',
+};
+
+function selectorForTimezone(timezone) {
+  return TZ_SELECTORS[timezone] || `.tz-btn[data-tz="${timezone}"]`;
+}
+
 const TZ_IANA = {
   'US/Eastern': 'America/New_York',
   UTC: 'UTC',
@@ -30,21 +43,65 @@ When('I enter the timestamp {string}', async function (timestamp) {
 });
 
 When('I select the source timezone {string}', async function (timezone) {
-  const selector = TZ_SELECTORS[timezone];
-  if (!selector) {
-    throw new Error(`Unsupported timezone in test step: ${timezone}`);
-  }
+  const selector = selectorForTimezone(timezone);
   this.selectedTimezone = timezone;
   await this.page.locator(selector).click();
 });
 
 When('I click the {string} toggle', async function (timezone) {
-  const selector = TZ_SELECTORS[timezone];
-  if (!selector) {
-    throw new Error(`Unsupported timezone in test step: ${timezone}`);
-  }
+  const selector = selectorForTimezone(timezone);
   this.selectedTimezone = timezone;
   await this.page.locator(selector).click();
+});
+
+Given('popup preferences include source timezone {string}', async function (timezone) {
+  await this.page.evaluate(({ timezone, defaults }) => {
+    const key = 'devClockPreferences';
+    const current = JSON.parse(localStorage.getItem(key) || 'null') || defaults;
+    const next = {
+      ...defaults,
+      ...current,
+      sourceTimezones: [...new Set([...(current.sourceTimezones || defaults.sourceTimezones), timezone, 'UTC', 'LOCAL'])],
+    };
+    localStorage.setItem(key, JSON.stringify(next));
+  }, { timezone, defaults: DEFAULT_PREFS });
+
+  await this.page.reload();
+  await this.page.waitForSelector('#timeInput');
+});
+
+Given('popup query provider is {string}', async function (provider) {
+  await this.page.evaluate(({ provider, defaults }) => {
+    const key = 'devClockPreferences';
+    const current = JSON.parse(localStorage.getItem(key) || 'null') || defaults;
+    const next = { ...defaults, ...current, queryProvider: provider };
+    localStorage.setItem(key, JSON.stringify(next));
+  }, { provider, defaults: DEFAULT_PREFS });
+
+  await this.page.reload();
+  await this.page.waitForSelector('#timeInput');
+});
+
+Given('popup hour format is {string}', async function (hourFormat) {
+  await this.page.evaluate(({ hourFormat, defaults }) => {
+    const key = 'devClockPreferences';
+    const current = JSON.parse(localStorage.getItem(key) || 'null') || defaults;
+    const next = { ...defaults, ...current, hourFormat };
+    localStorage.setItem(key, JSON.stringify(next));
+  }, { hourFormat, defaults: DEFAULT_PREFS });
+
+  await this.page.reload();
+  await this.page.waitForSelector('#timeInput');
+});
+
+Given('only legacy source timezone {string} exists', async function (timezone) {
+  await this.page.evaluate(timezone => {
+    localStorage.removeItem('devClockPreferences');
+    localStorage.setItem('sourceTz', timezone);
+  }, timezone);
+
+  await this.page.reload();
+  await this.page.waitForSelector('#timeInput');
 });
 
 When('I note the current converted ISO value', async function () {
@@ -177,11 +234,42 @@ Then('the input field should have focus automatically', async function () {
 });
 
 Then('{string} should still be the active toggle', async function (timezone) {
-  const selector = TZ_SELECTORS[timezone];
-  if (!selector) {
-    throw new Error(`Unsupported timezone in test step: ${timezone}`);
-  }
+  const selector = selectorForTimezone(timezone);
   await expect(this.page.locator(selector)).toHaveClass(/active/);
+});
+
+Then('a source timezone toggle for {string} should be visible', async function (timezone) {
+  const selector = selectorForTimezone(timezone);
+  await expect(this.page.locator(selector)).toBeVisible();
+});
+
+Then('the query preview label should contain {string}', async function (value) {
+  await expect(this.page.locator('#queryPreviewLabel')).toContainText(value);
+});
+
+Then('the query preview should contain {string}', async function (value) {
+  await expect(this.page.locator('#splunkPreviewText')).toContainText(value);
+});
+
+Then('the query preview should not contain {string}', async function (value) {
+  await expect(this.page.locator('#splunkPreviewText')).not.toContainText(value);
+});
+
+Then('the converted time should include a meridiem marker', async function () {
+  await expect(this.page.locator('#resultTime')).toHaveText(/\b(AM|PM)\b/i);
+});
+
+Then('the converted time should not include a meridiem marker', async function () {
+  await expect(this.page.locator('#resultTime')).not.toHaveText(/\b(AM|PM)\b/i);
+});
+
+Then('the new preferences should have active source timezone {string}', async function (expectedTimezone) {
+  const active = await this.page.evaluate(() => {
+    const raw = localStorage.getItem('devClockPreferences');
+    return raw ? JSON.parse(raw).activeSourceTimezone : null;
+  });
+
+  expect(active).toBe(expectedTimezone);
 });
 
 Then('the Splunk copy button should be enabled', async function () {

@@ -91,3 +91,38 @@ Feature: DevClock popup conversions
     Then the parse error should be visible
     And the Splunk copy button should be disabled
     And the time copy button should be disabled
+
+  Scenario: Render user-added source timezone from saved preferences
+    Given popup preferences include source timezone "Asia/Tokyo"
+    Then a source timezone toggle for "Asia/Tokyo" should be visible
+
+  Scenario: Switch query preview to Grafana format
+    Given popup query provider is "grafana"
+    When I enter the timestamp "2024-06-10T14:30:00Z"
+    Then the query preview label should contain "Grafana"
+    And the query preview should contain "from="
+    And the query preview should contain "&to="
+    And the query preview should not contain "_time"
+
+  Scenario: Switch query preview to CloudWatch format
+    Given popup query provider is "cloudwatch"
+    When I enter the timestamp "2024-06-10T14:30:00Z"
+    Then the query preview label should contain "CloudWatch"
+    And the query preview should contain "filter @timestamp"
+    And the query preview should contain "and @timestamp <="
+
+  Scenario: Apply 12-hour display mode from preferences
+    Given popup hour format is "12h"
+    When I enter the timestamp "2024-06-10T14:30:00Z"
+    Then the converted time should include a meridiem marker
+
+  Scenario: Apply 24-hour display mode from preferences
+    Given popup hour format is "24h"
+    When I enter the timestamp "2024-06-10T14:30:00Z"
+    Then the converted time should not include a meridiem marker
+
+  Scenario: Migrate legacy sourceTz into new preferences schema
+    Given only legacy source timezone "Europe/London" exists
+    When I close and re-open the extension popup
+    Then "UK/London" should still be the active toggle
+    And the new preferences should have active source timezone "Europe/London"
