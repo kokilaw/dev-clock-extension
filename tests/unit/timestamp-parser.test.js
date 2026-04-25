@@ -341,7 +341,19 @@ test('bundled parser vendor families', () => {
 
 test('uses chrono fallback for advanced natural-language phrases', () => {
   const result = parse('first business day of next month', 'UTC');
-  const expected = DateTime.fromISO('2026-05-27T01:45:30Z').toMillis();
+  const localReference = FIXED_NOW.setZone(DateTime.local().zoneName).plus({ months: 1 });
+  const expected = DateTime.fromObject(
+    {
+      year: localReference.year,
+      month: localReference.month,
+      day: localReference.day,
+      hour: localReference.hour,
+      minute: localReference.minute,
+      second: localReference.second,
+      millisecond: localReference.millisecond,
+    },
+    { zone: 'UTC' }
+  ).toMillis();
   assert.equal(result.millis, expected);
 });
 

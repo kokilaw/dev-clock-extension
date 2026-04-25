@@ -38,9 +38,9 @@ permissions:
   contents: read
 
 jobs:
-  integration-tests:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -55,9 +55,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Resolve package version
-        id: pkg
-        run: echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+      - name: Run unit tests
+        run: npm run test:unit
 
       - name: Cache Playwright browsers
         id: playwright-cache
@@ -72,17 +71,8 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
 
-      - name: Run unit tests
-        run: npm run test:unit
-
       - name: Run integration tests
         run: npm run test:integration:ci
-
-      - name: Build extension package
-        run: npm run package:extension
-
-      - name: Prepare snapshot artifact
-        run: cp dev-clock-extention-v${{ steps.pkg.outputs.version }}.zip dev-clock-extention-snapshot-${{ github.sha }}.zip
 
       - name: Upload test reports
         if: always()
@@ -95,11 +85,21 @@ jobs:
             playwright-report
           if-no-files-found: ignore
 
+      - name: Resolve package version
+        id: pkg
+        run: echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+
+      - name: Build extension package
+        run: npm run package:extension
+
+      - name: Prepare snapshot artifact
+        run: cp dev-clock-extention-v${{ steps.pkg.outputs.version }}.zip dev-clock-extention-snapshot-${{ github.sha }}.zip
+
       - name: Upload extension package
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dev-clock-extention-snapshot-${{ github.sha }}
           retention-days: 7
           path: dev-clock-extention-snapshot-${{ github.sha }}.zip
           if-no-files-found: ignore
+
