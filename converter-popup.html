@@ -349,6 +349,89 @@
       margin-left: auto;
     }
 
+    /* ── Target TZ Dropdown ─────────────────────────────── */
+    .target-tz-picker {
+      margin-left: auto;
+      position: relative;
+    }
+
+    .target-tz-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: rgba(0, 212, 200, 0.14);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 212, 200, 0.35);
+      border-radius: 3px;
+      padding: 3px 5px;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+      white-space: nowrap;
+    }
+
+    .target-tz-btn:hover {
+      background: rgba(0, 212, 200, 0.22);
+      border-color: rgba(0, 212, 200, 0.55);
+    }
+
+    .target-tz-chevron {
+      font-size: 8px;
+      opacity: 0.7;
+      line-height: 1;
+    }
+
+    .target-tz-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+      background: var(--bg-elevated, #1e2230);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+      z-index: 100;
+      min-width: 130px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+    }
+
+    .target-tz-dropdown.open { display: block; }
+
+    .target-tz-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 10px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.1s;
+    }
+
+    .target-tz-option:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .target-tz-option.active {
+      color: var(--accent-cyan);
+    }
+
+    .target-tz-option-offset {
+      font-size: 9px;
+      color: var(--text-muted);
+      opacity: 0.8;
+    }
+
+    .target-tz-option.active .target-tz-option-offset {
+      color: rgba(0, 212, 200, 0.6);
+    }
+
     .result-unix {
       font-family: var(--font-mono);
       font-size: 9px;
@@ -659,7 +742,13 @@
         <span class="result-from-tz" id="resultFromTz">US/ET</span>
         <span class="result-from-time" id="resultFromTime">—</span>
         <span class="result-arrow">→</span>
-        <span class="result-tz-badge" id="resultTargetBadge">AUS/MELB</span>
+        <div class="target-tz-picker" id="targetTzPicker">
+          <button type="button" class="target-tz-btn" id="targetTzBtn" aria-haspopup="listbox" aria-expanded="false">
+            <span id="resultTargetBadge">LOCAL</span>
+            <span class="target-tz-chevron" aria-hidden="true">▾</span>
+          </button>
+          <ul class="target-tz-dropdown" id="targetTzDropdown" role="listbox" aria-label="Target timezone"></ul>
+        </div>
       </div>
       <div class="result-main">
         <span class="result-time" id="resultTime">—</span>

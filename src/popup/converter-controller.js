@@ -49,14 +49,15 @@ const DEFAULT_SOURCE_TIMEZONES = ["America/New_York", "UTC", "Europe/London", "L
 // ── State ──────────────────────────────────────────────────────────────────
 
 const state = {
-  sourceTz:     "America/New_York",
-  parsedMillis: null,          // UTC epoch ms of the parsed moment
-  melbourneISO: null,          // ISO string in Melbourne time
-  prefs:        null,
-  queryProvider: "splunk",
+  sourceTz:          "America/New_York",
+  parsedMillis:      null,
+  melbourneISO:      null,
+  prefs:             null,
+  queryProvider:     "splunk",
   queryPreviewExpanded: false,
-  hourFormat: "24h",
-  targetTz: DEFAULT_TARGET_TZ,
+  hourFormat:        "24h",
+  targetTz:          DEFAULT_TARGET_TZ,
+  targetTzSelection: "LOCAL",
 };
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
@@ -64,28 +65,30 @@ const state = {
 const $ = id => document.getElementById(id);
 
 const els = {
-  input:         $("timeInput"),
-  clearBtn:      $("clearBtn"),
-  tzToggles:     $("tzToggles"),
-  resultEmpty:   $("resultEmpty"),
-  resultCard:    $("resultCard"),
-  resultFromTz:  $("resultFromTz"),
-  resultFromTime:$("resultFromTime"),
-  resultTime:    $("resultTime"),
-  resultDate:    $("resultDate"),
-  resultUnix:    $("resultUnix"),
-  resultISO:     $("resultISO"),
-  errorMsg:      $("errorMsg"),
-  splunkPreview: $("splunkPreview"),
+  input:            $("timeInput"),
+  clearBtn:         $("clearBtn"),
+  tzToggles:        $("tzToggles"),
+  resultEmpty:      $("resultEmpty"),
+  resultCard:       $("resultCard"),
+  resultFromTz:     $("resultFromTz"),
+  resultFromTime:   $("resultFromTime"),
+  resultTime:       $("resultTime"),
+  resultDate:       $("resultDate"),
+  resultUnix:       $("resultUnix"),
+  resultISO:        $("resultISO"),
+  errorMsg:         $("errorMsg"),
+  splunkPreview:    $("splunkPreview"),
   queryPreviewToggle: $("queryPreviewToggle"),
-  splunkText:    $("splunkPreviewText"),
+  splunkText:       $("splunkPreviewText"),
   queryPreviewLabel: $("queryPreviewLabel"),
-  targetMeta:    $("targetMeta"),
+  targetMeta:       $("targetMeta"),
   resultTargetBadge: $("resultTargetBadge"),
-  btnSplunk:     $("btnSplunk"),
-  btnCopy:       $("btnCopy"),
+  targetTzBtn:      $("targetTzBtn"),
+  targetTzDropdown: $("targetTzDropdown"),
+  btnSplunk:        $("btnSplunk"),
+  btnCopy:          $("btnCopy"),
   btnOpenPreferences: $("btnOpenPreferences"),
-  nowBadge:      $("nowBadge").querySelector("span"),
+  nowBadge:         $("nowBadge").querySelector("span"),
 };
 
 // ── Utilities ──────────────────────────────────────────────────────────────
@@ -127,7 +130,11 @@ function getSourceZoneName(sourceTz) {
 }
 
 function getTargetZoneName() {
-  return state.targetTz || DEFAULT_TARGET_TZ;
+  const sel = state.targetTzSelection || "LOCAL";
+  if (sel === "LOCAL") {
+    return state.targetTz || DEFAULT_TARGET_TZ;
+  }
+  return sel;
 }
 
 function getTimezoneDisplayName(timezone) {
@@ -419,9 +426,52 @@ function applyTargetUi() {
   }
 
   if (els.resultTargetBadge) {
-    els.resultTargetBadge.textContent = targetZone.toUpperCase().replace(/_/g, " ");
-    els.resultTargetBadge.title = targetZone;
+    const sel = state.targetTzSelection || "LOCAL";
+    els.resultTargetBadge.textContent = sel === "LOCAL" ? getTargetZoneName() : sel;
   }
+
+  // Re-render dropdown options to reflect current zone list + active selection
+  if (els.targetTzDropdown) {
+    const zones = normalizeSourceTimezones(state.prefs?.sourceTimezones);
+    els.targetTzDropdown.innerHTML = "";
+    for (const zone of zones) {
+      const li = document.createElement("li");
+      li.role = "option";
+      li.className = `target-tz-option${zone === (state.targetTzSelection || "LOCAL") ? " active" : ""}`;
+      li.dataset.tz = zone;
+
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = zone;
+
+      const offsetSpan = document.createElement("span");
+      offsetSpan.className = "target-tz-option-offset";
+      offsetSpan.textContent = getOffsetLabel(zone);
+
+      li.appendChild(nameSpan);
+      li.appendChild(offsetSpan);
+
+      li.addEventListener("click", () => {
+        state.targetTzSelection = zone;
+        closeTargetTzDropdown();
+        applyTargetUi();
+        runConversion();
+      });
+
+      els.targetTzDropdown.appendChild(li);
+    }
+  }
+}
+
+function openTargetTzDropdown() {
+  if (!els.targetTzDropdown || !els.targetTzBtn) return;
+  els.targetTzDropdown.classList.add("open");
+  els.targetTzBtn.setAttribute("aria-expanded", "true");
+}
+
+function closeTargetTzDropdown() {
+  if (!els.targetTzDropdown || !els.targetTzBtn) return;
+  els.targetTzDropdown.classList.remove("open");
+  els.targetTzBtn.setAttribute("aria-expanded", "false");
 }
 
 function formatTime(dt, includeSeconds = true) {
@@ -648,6 +698,19 @@ async function init() {
   els.queryPreviewToggle?.addEventListener("click", () => {
     setQueryPreviewExpanded(!state.queryPreviewExpanded);
   });
+
+  // ── Target timezone dropdown ──
+  els.targetTzBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = els.targetTzDropdown?.classList.contains("open");
+    if (isOpen) {
+      closeTargetTzDropdown();
+    } else {
+      openTargetTzDropdown();
+    }
+  });
+
+  document.addEventListener("click", () => closeTargetTzDropdown());
 
   // ── Copy for Splunk ──
   els.btnSplunk.addEventListener("click", () => {
