@@ -9,10 +9,10 @@
   }
 
   const els = {
-    localTimezoneSearch: document.getElementById("localTimezoneSearch"),
-    localTimezone: document.getElementById("localTimezone"),
-    timezoneToAddSearch: document.getElementById("timezoneToAddSearch"),
-    timezoneToAdd: document.getElementById("timezoneToAdd"),
+    localTimezoneInput: document.getElementById("localTimezoneInput"),
+    localTimezoneOptions: document.getElementById("localTimezoneOptions"),
+    timezoneToAddInput: document.getElementById("timezoneToAddInput"),
+    timezoneToAddOptions: document.getElementById("timezoneToAddOptions"),
     btnAddTimezone: document.getElementById("btnAddTimezone"),
     sourceTimezoneChips: document.getElementById("sourceTimezoneChips"),
     queryProvider: document.getElementById("queryProvider"),
@@ -54,35 +54,31 @@
     ];
   }
 
-  function fillSelectWithTimezones(selectEl, zones, includeLocal = false) {
+  function fillDatalistWithTimezones(datalistEl, zones, includeLocal = false) {
     const options = includeLocal ? ["LOCAL", ...zones] : zones;
-    const previousValue = selectEl.value;
-
-    selectEl.innerHTML = "";
+    datalistEl.innerHTML = "";
     for (const zone of options) {
       const option = document.createElement("option");
       option.value = zone;
-      option.textContent = zone;
-      selectEl.appendChild(option);
-    }
-
-    if (previousValue && options.includes(previousValue)) {
-      selectEl.value = previousValue;
+      datalistEl.appendChild(option);
     }
   }
 
-  function filterTimezones(query) {
-    const normalized = (query || "").trim().toLowerCase();
-    if (!normalized) return timezoneOptions;
-    return timezoneOptions.filter(zone => zone.toLowerCase().includes(normalized));
+  function isValidTimezone(zone, allowLocal = false) {
+    if (typeof zone !== "string" || !zone.trim()) return false;
+    if (allowLocal && zone === "LOCAL") return true;
+
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone: zone });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
-  function refreshTimezoneSelects() {
-    const localZones = filterTimezones(els.localTimezoneSearch?.value);
-    const addZones = filterTimezones(els.timezoneToAddSearch?.value);
-
-    fillSelectWithTimezones(els.localTimezone, localZones, false);
-    fillSelectWithTimezones(els.timezoneToAdd, addZones, true);
+  function refreshTimezoneInputs() {
+    fillDatalistWithTimezones(els.localTimezoneOptions, timezoneOptions, false);
+    fillDatalistWithTimezones(els.timezoneToAddOptions, timezoneOptions, true);
   }
 
   function renderTimezoneChips() {
@@ -110,7 +106,7 @@
   }
 
   function renderFormFromPrefs() {
-    els.localTimezone.value = currentPrefs.localTimezone;
+    els.localTimezoneInput.value = currentPrefs.localTimezone;
     els.queryProvider.value = currentPrefs.queryProvider;
 
     els.hourFormatRadios.forEach(r => {
@@ -124,7 +120,7 @@
     const selectedHour = [...els.hourFormatRadios].find(r => r.checked)?.value || "24h";
 
     return {
-      localTimezone: els.localTimezone.value,
+      localTimezone: els.localTimezoneInput.value.trim(),
       queryProvider: els.queryProvider.value,
       hourFormat: selectedHour,
       sourceTimezones: currentPrefs.sourceTimezones,
@@ -134,7 +130,7 @@
 
   async function load() {
     timezoneOptions = getTimezoneOptions();
-    refreshTimezoneSelects();
+    refreshTimezoneInputs();
 
     currentPrefs = await prefsApi.getPreferences();
     renderFormFromPrefs();
@@ -143,30 +139,32 @@
 
   function wireEvents() {
     els.btnAddTimezone.addEventListener("click", () => {
-      const zone = els.timezoneToAdd.value;
+      const zone = els.timezoneToAddInput.value.trim();
       if (!zone) return;
+
+      if (!isValidTimezone(zone, true)) {
+        setStatus(`Invalid timezone: ${zone}`, "err");
+        return;
+      }
 
       if (!currentPrefs.sourceTimezones.includes(zone)) {
         currentPrefs.sourceTimezones.push(zone);
         renderTimezoneChips();
         setStatus(`Added ${zone}.`);
+        els.timezoneToAddInput.value = "";
       } else {
         setStatus(`${zone} is already in the list.`, "err");
       }
     });
 
-    els.localTimezoneSearch?.addEventListener("input", () => {
-      const selected = els.localTimezone.value;
-      refreshTimezoneSelects();
-      if (selected) els.localTimezone.value = selected;
-    });
-
-    els.timezoneToAddSearch?.addEventListener("input", () => {
-      refreshTimezoneSelects();
-    });
-
     els.btnSave.addEventListener("click", async () => {
       const patch = collectFormPatch();
+
+      if (!isValidTimezone(patch.localTimezone)) {
+        setStatus(`Invalid timezone: ${patch.localTimezone}`, "err");
+        return;
+      }
+
       currentPrefs = await prefsApi.savePreferences(patch);
       renderFormFromPrefs();
       setStatus("Preferences saved.");

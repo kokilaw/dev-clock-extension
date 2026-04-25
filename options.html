@@ -178,10 +178,9 @@
 
     <div class="card">
       <h2>Local timezone</h2>
-      <label for="localTimezoneSearch">Search timezone</label>
-      <input id="localTimezoneSearch" type="text" placeholder="Type to filter timezones" />
-      <label for="localTimezone">IANA timezone</label>
-      <select id="localTimezone"></select>
+      <label for="localTimezoneInput">IANA timezone (searchable)</label>
+      <input id="localTimezoneInput" type="text" list="localTimezoneOptions" placeholder="Start typing a timezone" autocomplete="off" />
+      <datalist id="localTimezoneOptions"></datalist>
       <div class="hint">Used when source timezone is set to <strong>Local</strong>.</div>
     </div>
 
@@ -189,10 +188,9 @@
       <h2>Source timezones for popup toggles</h2>
       <div class="row">
         <div>
-          <label for="timezoneToAddSearch">Search timezone</label>
-          <input id="timezoneToAddSearch" type="text" placeholder="Type to filter timezones" />
-          <label for="timezoneToAdd">Add timezone</label>
-          <select id="timezoneToAdd"></select>
+          <label for="timezoneToAddInput">Add timezone (searchable)</label>
+          <input id="timezoneToAddInput" type="text" list="timezoneToAddOptions" placeholder="Start typing a timezone" autocomplete="off" />
+          <datalist id="timezoneToAddOptions"></datalist>
         </div>
         <button id="btnAddTimezone" class="btn" type="button">Add</button>
       </div>
