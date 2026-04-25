@@ -91,11 +91,12 @@
       margin-bottom: 6px;
     }
 
-    input, button {
+    input, select, button {
       font: inherit;
     }
 
-    input[type="text"] {
+    input[type="text"],
+    select {
       width: 100%;
       background: var(--bg-raised);
       color: var(--text-primary);
@@ -113,9 +114,26 @@
       color: var(--text-muted);
     }
 
-    input[type="text"]:focus {
+    input[type="text"]:focus,
+    select:focus {
       border-color: var(--border-focus);
       box-shadow: 0 0 0 2px rgba(61, 142, 255, 0.15);
+    }
+
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 30px;
+      cursor: pointer;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
+        linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
+      background-position:
+        calc(100% - 16px) calc(50% - 2px),
+        calc(100% - 11px) calc(50% - 2px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
     }
 
     .combo {
@@ -201,7 +219,7 @@
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 8px;
-      align-items: start;
+      align-items: end;
     }
 
     .chips {
