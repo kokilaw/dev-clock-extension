@@ -29,6 +29,7 @@ if (!Parser || typeof Parser.parseTimestamp !== "function") {
 const DEFAULT_TARGET_TZ = "Australia/Melbourne";
 const SPLUNK_WINDOW = 1; // ± minutes for the Splunk fragment
 const PREFERENCES_STORAGE_KEY = "devClockPreferences";
+const PENDING_INPUT_STORAGE_KEY = "devClockPendingInput";
 
 const TZ_DISPLAY_NAMES = {
   "America/New_York": "US/ET",
@@ -567,6 +568,76 @@ function runConversion() {
   showResult(result.millis);
 }
 
+async function tryAutofillFromClipboard() {
+  if (!navigator.clipboard?.readText) return;
+  if (els.input.value.trim()) return;
+
+  try {
+    const clipboardText = await navigator.clipboard.readText();
+    const candidate = (clipboardText || "").trim();
+    if (!candidate) return;
+
+    const parsed = parseTimestamp(candidate, state.sourceTz);
+    if (parsed.error) return;
+
+    els.input.value = candidate;
+    els.clearBtn.classList.toggle("visible", els.input.value.length > 0);
+    runConversion();
+  } catch {
+    // Clipboard may be unavailable without permission/user gesture; ignore.
+  }
+}
+
+function getPendingInputFromLocalStorage() {
+  try {
+    const value = localStorage.getItem(PENDING_INPUT_STORAGE_KEY) || "";
+    if (value) {
+      localStorage.removeItem(PENDING_INPUT_STORAGE_KEY);
+    }
+    return value;
+  } catch {
+    return "";
+  }
+}
+
+async function consumePendingInput() {
+  if (globalThis.chrome?.storage?.local) {
+    return new Promise(resolve => {
+      globalThis.chrome.storage.local.get([PENDING_INPUT_STORAGE_KEY], items => {
+        const candidate = typeof items?.[PENDING_INPUT_STORAGE_KEY] === "string"
+          ? items[PENDING_INPUT_STORAGE_KEY].trim()
+          : "";
+
+        if (!candidate) {
+          resolve("");
+          return;
+        }
+
+        globalThis.chrome.storage.local.remove([PENDING_INPUT_STORAGE_KEY], () => {
+          resolve(candidate);
+        });
+      });
+    });
+  }
+
+  return getPendingInputFromLocalStorage().trim();
+}
+
+function tryAutofillFromCandidate(candidate) {
+  if (els.input.value.trim()) return false;
+
+  const value = (candidate || "").trim();
+  if (!value) return false;
+
+  const parsed = parseTimestamp(value, state.sourceTz);
+  if (parsed.error) return false;
+
+  els.input.value = value;
+  els.clearBtn.classList.toggle("visible", els.input.value.length > 0);
+  runConversion();
+  return true;
+}
+
 function updateTzOffsets() {
   document.querySelectorAll(".tz-btn[data-tz]").forEach(btn => {
     const tz = btn.dataset.tz;
@@ -708,6 +779,15 @@ async function init() {
   applyProviderUi();
   applyTargetUi();
   setQueryPreviewExpanded(false);
+
+  // ── Pending input from context menu ──
+  const pendingInput = await consumePendingInput();
+  if (tryAutofillFromCandidate(pendingInput)) {
+    // done
+  } else {
+    // ── Optional clipboard prefill ──
+    await tryAutofillFromClipboard();
+  }
 
   // ── Query preview collapse toggle ──
   els.queryPreviewToggle?.addEventListener("click", () => {

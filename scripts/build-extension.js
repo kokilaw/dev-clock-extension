@@ -11,6 +11,7 @@ const requiredFiles = [
   path.join('src', 'options', 'options.js'),
   path.join('src', 'shared', 'preferences.js'),
   path.join('src', 'shared', 'timestamp-parser.js'),
+  path.join('src', 'background', 'service-worker.js'),
   path.join('src', 'popup', 'converter-controller.js'),
   path.join('lib', 'luxon.min.js'),
   path.join('lib', 'parser-vendors.js'),
