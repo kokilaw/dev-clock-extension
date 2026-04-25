@@ -54,6 +54,7 @@ const state = {
   melbourneISO: null,          // ISO string in Melbourne time
   prefs:        null,
   queryProvider: "splunk",
+  queryPreviewExpanded: false,
   hourFormat: "24h",
   targetTz: DEFAULT_TARGET_TZ,
 };
@@ -76,6 +77,7 @@ const els = {
   resultISO:     $("resultISO"),
   errorMsg:      $("errorMsg"),
   splunkPreview: $("splunkPreview"),
+  queryPreviewToggle: $("queryPreviewToggle"),
   splunkText:    $("splunkPreviewText"),
   queryPreviewLabel: $("queryPreviewLabel"),
   targetMeta:    $("targetMeta"),
@@ -396,6 +398,18 @@ function applyProviderUi() {
   }
 }
 
+function setQueryPreviewExpanded(expanded) {
+  if (!els.splunkPreview) return;
+
+  state.queryPreviewExpanded = !!expanded;
+  els.splunkPreview.classList.toggle("expanded", state.queryPreviewExpanded);
+  els.splunkPreview.classList.toggle("collapsed", !state.queryPreviewExpanded);
+
+  if (els.queryPreviewToggle) {
+    els.queryPreviewToggle.setAttribute("aria-expanded", state.queryPreviewExpanded ? "true" : "false");
+  }
+}
+
 function applyTargetUi() {
   const targetName = getTargetDisplayName();
   const targetZone = getTargetZoneName();
@@ -478,6 +492,7 @@ function showResult(millis) {
   els.errorMsg.classList.remove("visible");
   els.resultCard.classList.add("visible");
   els.splunkPreview.classList.add("visible");
+  setQueryPreviewExpanded(state.queryPreviewExpanded);
   els.btnSplunk.disabled = false;
   els.btnCopy.disabled   = false;
   els.input.classList.remove("error");
@@ -627,6 +642,12 @@ async function init() {
   renderTimezoneToggles(state.prefs?.sourceTimezones, savedTz || state.sourceTz);
   applyProviderUi();
   applyTargetUi();
+  setQueryPreviewExpanded(false);
+
+  // ── Query preview collapse toggle ──
+  els.queryPreviewToggle?.addEventListener("click", () => {
+    setQueryPreviewExpanded(!state.queryPreviewExpanded);
+  });
 
   // ── Copy for Splunk ──
   els.btnSplunk.addEventListener("click", () => {

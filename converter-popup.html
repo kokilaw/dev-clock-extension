@@ -252,7 +252,6 @@
     /* ── Result Card ────────────────────────────────────── */
     .result-zone {
       padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
       min-height: 74px;
     }
 
@@ -359,7 +358,6 @@
       column-gap: 8px;
       row-gap: 3px;
       align-items: baseline;
-      border-top: 1px solid rgba(42, 47, 58, 0.55);
       padding-top: 6px;
     }
 
@@ -462,12 +460,26 @@
       background: var(--bg-raised);
       border: 1px solid var(--border);
       border-radius: 5px;
-      padding: 7px 10px;
+      padding: 5px 10px 6px;
       display: none;
       animation: slideIn 0.15s ease;
+      overflow: hidden;
     }
 
     .splunk-preview.visible { display: block; }
+
+    .splunk-preview-toggle {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 0;
+      text-align: left;
+    }
 
     .splunk-preview-label {
       font-size: 9px;
@@ -475,7 +487,47 @@
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--text-muted);
-      margin-bottom: 4px;
+      margin: 0;
+      display: inline-block;
+      line-height: 1.2;
+      transition: color 0.12s ease;
+    }
+
+    .splunk-preview-toggle:hover .splunk-preview-label {
+      color: var(--text-secondary);
+    }
+
+    .splunk-preview-chevron {
+      font-size: 10px;
+      color: var(--text-muted);
+      transform: rotate(0deg);
+      transition: transform 0.14s ease, color 0.12s ease;
+      margin-left: 8px;
+      margin-top: 0;
+    }
+
+    .splunk-preview.expanded .splunk-preview-chevron {
+      transform: rotate(180deg);
+      color: var(--text-secondary);
+    }
+
+    .splunk-preview-body {
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(-2px);
+      margin-top: 0;
+      transition:
+        max-height 0.24s ease,
+        opacity 0.18s ease,
+        transform 0.18s ease,
+        margin-top 0.18s ease;
+    }
+
+    .splunk-preview.expanded .splunk-preview-body {
+      max-height: 132px;
+      opacity: 1;
+      transform: translateY(0);
+      margin-top: 4px;
     }
 
     .splunk-preview-text {
@@ -622,9 +674,14 @@
   </div>
 
   <!-- Splunk Preview -->
-  <div class="splunk-preview" id="splunkPreview">
-    <div class="splunk-preview-label" id="queryPreviewLabel">Query Preview</div>
-    <div class="splunk-preview-text" id="splunkPreviewText"></div>
+  <div class="splunk-preview collapsed" id="splunkPreview">
+    <button type="button" class="splunk-preview-toggle" id="queryPreviewToggle" aria-expanded="false" aria-controls="queryPreviewBody">
+      <span class="splunk-preview-label" id="queryPreviewLabel">Query Preview</span>
+      <span class="splunk-preview-chevron" aria-hidden="true">▾</span>
+    </button>
+    <div class="splunk-preview-body" id="queryPreviewBody">
+      <div class="splunk-preview-text" id="splunkPreviewText"></div>
+    </div>
   </div>
 
   <!-- Actions -->
