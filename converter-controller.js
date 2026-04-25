@@ -48,6 +48,7 @@ const state = {
   melbourneISO: null,          // ISO string in Melbourne time
   prefs:        null,
   queryProvider: "splunk",
+  hourFormat: "24h",
 };
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
@@ -414,6 +415,15 @@ function applyProviderUi() {
   }
 }
 
+function formatTime(dt, includeSeconds = true) {
+  const isTwelveHour = state.hourFormat === "12h";
+  if (includeSeconds) {
+    return dt.toFormat(isTwelveHour ? "h:mm:ss a" : "HH:mm:ss");
+  }
+
+  return dt.toFormat(isTwelveHour ? "h:mm a" : "HH:mm");
+}
+
 // ── Rendering ──────────────────────────────────────────────────────────────
 
 function showError(msg) {
@@ -452,10 +462,10 @@ function showResult(millis) {
   const sourceDT    = Luxon.DateTime.fromMillis(millis, { zone: actualZone });
 
   els.resultFromTz.textContent   = getTimezoneDisplayName(state.sourceTz);
-  els.resultFromTime.textContent = sourceDT.toFormat("HH:mm:ss (dd LLL yyyy)");
+  els.resultFromTime.textContent = `${formatTime(sourceDT)} (${sourceDT.toFormat("dd LLL yyyy")})`;
 
   // Melbourne display
-  els.resultTime.textContent = melb.toFormat("HH:mm:ss");
+  els.resultTime.textContent = formatTime(melb);
   els.resultDate.textContent = melb.toFormat("ccc, dd LLL yyyy");
 
   // Extra info
@@ -531,7 +541,7 @@ async function copyToClipboard(text, btn) {
 
 function updateNowBadge() {
   const now = Luxon.DateTime.now().setZone(TARGET_TZ);
-  els.nowBadge.textContent = now.toFormat("HH:mm:ss");
+  els.nowBadge.textContent = formatTime(now);
 }
 
 function applyActiveTimezone(timezone) {
@@ -548,6 +558,7 @@ async function loadActiveTimezonePreference() {
   if (globalThis.DevClockPreferences?.getPreferences) {
     state.prefs = await globalThis.DevClockPreferences.getPreferences();
     state.queryProvider = state.prefs?.queryProvider || "splunk";
+    state.hourFormat = state.prefs?.hourFormat || "24h";
     return state.prefs?.activeSourceTimezone || null;
   }
 
@@ -555,8 +566,10 @@ async function loadActiveTimezonePreference() {
     sourceTimezones: [...DEFAULT_SOURCE_TIMEZONES],
     localTimezone: Luxon.DateTime.local().zoneName,
     queryProvider: "splunk",
+    hourFormat: "24h",
   };
   state.queryProvider = "splunk";
+  state.hourFormat = "24h";
 
   return localStorage.getItem("sourceTz");
 }
