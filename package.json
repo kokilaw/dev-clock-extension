@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "sync:luxon": "node scripts/sync-luxon.js",
+    "icons:generate": "node scripts/generate-icons.js",
     "prebuild:extension": "npm run sync:luxon",
     "build:extension": "node scripts/build-extension.js",
     "package:extension": "npm run build:extension && cd dist && zip -r ../log-time-sync-extension.zip .",
