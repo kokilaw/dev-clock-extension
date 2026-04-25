@@ -1,7 +1,7 @@
 {
   "name": "dev-clock-extention",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "scripts": {
     "sync:luxon": "node scripts/sync-luxon.js",
     "sync:parser-vendors": "node scripts/build-parser-vendors.js",
