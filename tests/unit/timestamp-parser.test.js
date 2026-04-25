@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { DateTime } = require('luxon');
-const { parseTimestamp } = require('../../timestamp-parser');
+const { parseTimestamp } = require('../../src/shared/timestamp-parser');
 
 const FIXED_NOW = DateTime.fromISO('2026-04-26T15:45:30', { zone: 'UTC' });
 

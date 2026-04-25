@@ -17,11 +17,11 @@ const Luxon = globalThis.luxon || globalThis.Luxon;
 const Parser = globalThis.DevClockTimestampParser;
 
 if (!Luxon || !Luxon.DateTime) {
-  throw new Error("Luxon failed to load. Ensure converter-popup.html loads lib/luxon.min.js before converter-controller.js.");
+  throw new Error("Luxon failed to load. Ensure converter-popup.html loads lib/luxon.min.js before src/popup/converter-controller.js.");
 }
 
 if (!Parser || typeof Parser.parseTimestamp !== "function") {
-  throw new Error("Timestamp parser failed to load. Ensure converter-popup.html loads timestamp-parser.js before converter-controller.js.");
+  throw new Error("Timestamp parser failed to load. Ensure converter-popup.html loads src/shared/timestamp-parser.js before src/popup/converter-controller.js.");
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────

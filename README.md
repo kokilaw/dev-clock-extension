@@ -157,8 +157,8 @@ On first load after upgrade, legacy `sourceTz` is migrated into the new preferen
 ## Tech stack
 
 - HTML/CSS popup UI
-- Vanilla JavaScript logic in `converter-controller.js`
-- Shared parser module in `timestamp-parser.js`
+- Vanilla JavaScript logic in `src/popup/converter-controller.js`
+- Shared parser module in `src/shared/timestamp-parser.js`
 - Luxon (local bundle) in `lib/luxon.min.js`
 - `chrono`, `anyDateParser`, and timezone abbreviation resolution available as globals
 - Chrome Extension Manifest V3 (`manifest.json`)
@@ -177,11 +177,11 @@ Building creates a minimal extension payload in `dist/` with only runtime files 
 
 - `manifest.json`
 - `converter-popup.html`
-- `converter-controller.js`
-- `timestamp-parser.js`
+- `src/popup/converter-controller.js`
+- `src/shared/timestamp-parser.js`
 - `options.html`
-- `options.js`
-- `preferences.js`
+- `src/options/options.js`
+- `src/shared/preferences.js`
 - `lib/luxon.min.js`
 - `icons/icon16.png`, `icons/icon48.png`, `icons/icon128.png`
 
@@ -210,8 +210,8 @@ These run tests before bumping (`preversion`) and push commit + tag automaticall
 
 - The popup uses local Luxon (`lib/luxon.min.js`) to stay MV3-compatible.
 - No remote CDN runtime scripts are required.
-- Parsing logic is isolated in `timestamp-parser.js` so it can be unit-tested separately from popup UI wiring.
-- `converter-controller.js` remains the popup/controller layer and delegates parsing to the shared parser module.
+- Parsing logic is isolated in `src/shared/timestamp-parser.js` so it can be unit-tested separately from popup UI wiring.
+- `src/popup/converter-controller.js` remains the popup/controller layer and delegates parsing to the shared parser module.
 
 ## Run unit tests
 
@@ -281,8 +281,15 @@ Covered scenarios:
 dev-clock-extention/
 ├── manifest.json
 ├── converter-popup.html
-├── converter-controller.js
-├── timestamp-parser.js
+├── options.html
+├── src/
+│   ├── options/
+│   │   └── options.js
+│   ├── popup/
+│   │   └── converter-controller.js
+│   └── shared/
+│       ├── preferences.js
+│       └── timestamp-parser.js
 ├── lib/
 │   └── luxon.min.js
 ├── icons/
