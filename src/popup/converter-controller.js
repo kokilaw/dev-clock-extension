@@ -44,7 +44,7 @@ const TZ_BUTTON_IDS = {
   "LOCAL": "tz-local",
 };
 
-const DEFAULT_SOURCE_TIMEZONES = ["America/New_York", "UTC", "Europe/London", "LOCAL"];
+const DEFAULT_SOURCE_TIMEZONES = ["UTC", "LOCAL"];
 
 // ── State ──────────────────────────────────────────────────────────────────
 
@@ -113,7 +113,7 @@ function normalizeSourceTimezones(timezones) {
     if (!normalized.includes(zone)) normalized.push(zone);
   }
 
-  for (const required of ["UTC", "LOCAL"]) {
+  for (const required of ["LOCAL"]) {
     if (!normalized.includes(required)) normalized.push(required);
   }
 

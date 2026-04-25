@@ -18,7 +18,7 @@ When troubleshooting logs, teams often receive timestamps from mixed regions and
 - Generates provider-specific query windows (`±1 minute` by default)
 - Supports query output providers: `splunk`, `grafana`, `cloudwatch`
 - Supports 12h/24h display modes from preferences
-- Source timezone toggles are configurable from the Preferences page
+- Source timezone toggles and target timezone dropdown options are configurable from the Preferences page
 - Copy actions for converted time and provider query fragment
 - Separate unit + integration coverage for parser logic and UI flows
 
@@ -118,9 +118,12 @@ Inputs are tried in priority order until one succeeds.
 Open popup → click **Preferences**.
 
 The settings page supports:
-- Local timezone override (`localTimezone`) used when source toggle is `LOCAL`
-- Source timezone list management (`sourceTimezones`)
-   - `UTC` and `LOCAL` are always preserved and non-removable
+- Default target timezone (`localTimezone`) used as the popup target timezone default
+  - defaults to the current browser timezone
+- Time zone display options list management (`sourceTimezones`)
+   - defaults are `UTC` and `LOCAL`
+   - `LOCAL` is always preserved and non-removable
+   - `UTC` is removable
    - duplicates are prevented
 - Active source timezone persistence (`activeSourceTimezone`)
 - Query provider selection (`splunk`, `grafana`, `cloudwatch`)
@@ -135,6 +138,7 @@ All preferences persist across browser restarts.
 - Switching the toggle re-runs the conversion instantly — useful for comparing "same wall-clock time in different zones".
 - The selected timezone is persisted in the shared preferences schema and restored on next open.
 - Source toggles in popup are rendered dynamically from configured `sourceTimezones`.
+- Target timezone dropdown options in popup are also rendered from configured `sourceTimezones`.
 
 ### Query provider behavior
 

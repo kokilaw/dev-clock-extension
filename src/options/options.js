@@ -32,7 +32,7 @@
     status: document.getElementById("status"),
   };
 
-  const LOCKED_TIMEZONES = new Set(["UTC", "LOCAL"]);
+  const LOCKED_TIMEZONES = new Set(["LOCAL"]);
 
   let currentPrefs = null;
   let timezoneOptions = [];
@@ -285,7 +285,7 @@
         removeBtn.addEventListener("click", () => {
           currentPrefs.sourceTimezones = currentPrefs.sourceTimezones.filter(z => z !== zone);
           if (currentPrefs.activeSourceTimezone === zone) {
-            currentPrefs.activeSourceTimezone = currentPrefs.sourceTimezones[0] || "UTC";
+            currentPrefs.activeSourceTimezone = currentPrefs.sourceTimezones[0] || "LOCAL";
           }
           renderTimezoneChips();
         });

@@ -342,36 +342,36 @@
     </div>
 
     <div class="card">
-      <h2>Local timezone</h2>
-      <label for="localTimezoneInput">IANA timezone (searchable)</label>
+      <h2>Default Target Time Zone</h2>
+      <label for="localTimezoneInput">IANA Timezone (Searchable)</label>
       <div class="combo" id="localTimezoneCombo">
         <input id="localTimezoneInput" type="text" placeholder="Start typing a timezone" autocomplete="off" />
-        <button id="localTimezoneToggle" class="combo-toggle" type="button" aria-label="Toggle local timezone list">▾</button>
-        <ul id="localTimezoneList" class="combo-list" role="listbox" aria-label="Local timezone options"></ul>
+        <button id="localTimezoneToggle" class="combo-toggle" type="button" aria-label="Toggle default target timezone list">▾</button>
+        <ul id="localTimezoneList" class="combo-list" role="listbox" aria-label="Default target timezone options"></ul>
       </div>
-      <div class="hint">Used when source timezone is set to <strong>Local</strong>.</div>
+      <div class="hint">Used as the default selected target timezone in the popup. Default is your current browser timezone.</div>
     </div>
 
     <div class="card">
-      <h2>Source timezones for popup toggles</h2>
+      <h2>Time Zone Display Options</h2>
       <div class="row">
         <div>
-          <label for="timezoneToAddInput">Add timezone (searchable)</label>
+          <label for="timezoneToAddInput">Add Timezone (Searchable)</label>
           <div class="combo" id="timezoneToAddCombo">
             <input id="timezoneToAddInput" type="text" placeholder="Start typing a timezone" autocomplete="off" />
             <button id="timezoneToAddToggle" class="combo-toggle" type="button" aria-label="Toggle add timezone list">▾</button>
             <ul id="timezoneToAddList" class="combo-list" role="listbox" aria-label="Timezone options to add"></ul>
           </div>
         </div>
-        <button id="btnAddTimezone" class="btn" type="button">Add</button>
+        <button id="btnAddTimezone" class="btn" type="button">Add Timezone</button>
       </div>
       <div id="sourceTimezoneChips" class="chips"></div>
-      <div class="hint">UTC and LOCAL are always kept and cannot be removed.</div>
+      <div class="hint">These options are used for both source toggles and target dropdown selection in the popup. Default options are UTC and LOCAL. LOCAL is always kept.</div>
     </div>
 
     <div class="card">
-      <h2>Copy query provider</h2>
-      <label for="queryProviderInput">Provider</label>
+      <h2>Copy Query Provider</h2>
+      <label for="queryProviderInput">Query Provider</label>
       <div class="combo" id="queryProviderCombo">
         <input id="queryProviderInput" type="text" placeholder="Select provider" autocomplete="off" />
         <button id="queryProviderToggle" class="combo-toggle" type="button" aria-label="Toggle provider list">▾</button>
@@ -380,17 +380,17 @@
     </div>
 
     <div class="card">
-      <h2>Time display format</h2>
+      <h2>Time Display Format</h2>
       <div class="inline">
-        <label><input type="radio" name="hourFormat" value="24h" /> 24-hour</label>
-        <label><input type="radio" name="hourFormat" value="12h" /> 12-hour</label>
+        <label><input type="radio" name="hourFormat" value="24h" /> Twenty Four Hour</label>
+        <label><input type="radio" name="hourFormat" value="12h" /> Twelve Hour</label>
       </div>
     </div>
 
     <div class="card footer">
       <div>
-        <button id="btnSave" class="btn primary" type="button">Save preferences</button>
-        <button id="btnReset" class="btn danger" type="button">Reset defaults</button>
+        <button id="btnSave" class="btn primary" type="button">Save Preferences</button>
+        <button id="btnReset" class="btn danger" type="button">Reset Defaults</button>
       </div>
       <div id="status" class="status"></div>
     </div>

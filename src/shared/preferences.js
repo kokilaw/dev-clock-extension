@@ -8,8 +8,8 @@
   const DEFAULTS = {
     schemaVersion: SCHEMA_VERSION,
     localTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-    sourceTimezones: ["America/New_York", "UTC", "Europe/London", "LOCAL"],
-    activeSourceTimezone: "America/New_York",
+    sourceTimezones: ["UTC", "LOCAL"],
+    activeSourceTimezone: "UTC",
     queryProvider: "splunk",
     hourFormat: "24h",
   };
@@ -39,7 +39,7 @@
       if (!sourceTimezones.includes(zone)) sourceTimezones.push(zone);
     }
 
-    for (const required of ["UTC", "LOCAL"]) {
+    for (const required of ["LOCAL"]) {
       if (!sourceTimezones.includes(required)) sourceTimezones.push(required);
     }
 
