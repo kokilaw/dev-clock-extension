@@ -6,7 +6,7 @@
     "sync:luxon": "node scripts/sync-luxon.js",
     "prebuild:extension": "npm run sync:luxon",
     "build:extension": "node scripts/build-extension.js",
-    "package:extension": "npm run build:extension && cd dist && rm -f ../dev-clock-extention-v*.zip && zip -r ../dev-clock-extention-v$npm_package_version.zip .",
+    "package:extension": "npm run build:extension && VERSION=$(node -p 'require(\"./package.json\").version') && cd dist && rm -f ../dev-clock-extention-v*.zip && zip -r ../dev-clock-extention-v$VERSION.zip .",
     "preversion": "npm run test:integration",
     "release:patch": "npm version patch",
     "release:minor": "npm version minor",
