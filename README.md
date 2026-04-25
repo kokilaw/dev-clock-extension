@@ -9,7 +9,7 @@ DevClock is a compact Chrome extension that helps engineers convert timestamps f
 
 ## Why this exists
 
-When troubleshooting logs, teams often receive timestamps from mixed regions and formats. This tool removes manual timezone math and gives a copy-ready Splunk time fragment instantly.
+When troubleshooting logs, teams often receive timestamps from mixed regions and formats. This tool removes manual timezone math and gives a copy-ready query fragment instantly.
 
 ## Features
 
@@ -210,13 +210,13 @@ Covered scenarios:
 - ISO UTC conversion to Melbourne time
 - ISO 8601 with milliseconds (sub-second precision preserved)
 - Naive ISO interpreted using selected source timezone
-- Unix epoch seconds conversion + Splunk preview window
+- Unix epoch seconds conversion + query preview window
 - Time-only input defaults to today's date in source timezone
 - Military time without colons (`1545` → 15:45)
 - Natural-language: `yesterday at 5pm`, `last Monday`, `October 30th 2pm`
 - DST cross-over offset validation (Melbourne vs. source zone)
 - `Z`-suffixed input ignores source timezone toggle
-- Toggle change updates conversion and Splunk range instantly
+- Toggle change updates conversion and query range instantly
 - Invalid input shows parse error and disables copy buttons
 - Auto-focus on popup open
 - Persistent toggle state across reload (via shared preferences)
