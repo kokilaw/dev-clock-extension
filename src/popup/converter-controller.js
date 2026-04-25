@@ -85,8 +85,6 @@ const els = {
   resultTargetBadge: $("resultTargetBadge"),
   targetTzBtn:      $("targetTzBtn"),
   targetTzDropdown: $("targetTzDropdown"),
-  btnSplunk:        $("btnSplunk"),
-  btnCopy:          $("btnCopy"),
   btnOpenPreferences: $("btnOpenPreferences"),
   nowBadge:         $("nowBadge").querySelector("span"),
 };
@@ -491,8 +489,6 @@ function showError(msg) {
   els.errorMsg.textContent = `⚠ ${msg}`;
   els.errorMsg.classList.add("visible");
   els.splunkPreview.classList.remove("visible");
-  els.btnSplunk.disabled = true;
-  els.btnCopy.disabled   = true;
   els.input.classList.add("error");
   els.input.classList.remove("success");
   state.parsedMillis = null;
@@ -504,8 +500,6 @@ function showEmpty() {
   els.resultEmpty.style.display = "flex";
   els.errorMsg.classList.remove("visible");
   els.splunkPreview.classList.remove("visible");
-  els.btnSplunk.disabled = true;
-  els.btnCopy.disabled   = true;
   els.input.classList.remove("error", "success");
   state.parsedMillis = null;
   state.melbourneISO = null;
@@ -543,8 +537,6 @@ function showResult(millis) {
   els.resultCard.classList.add("visible");
   els.splunkPreview.classList.add("visible");
   setQueryPreviewExpanded(state.queryPreviewExpanded);
-  els.btnSplunk.disabled = false;
-  els.btnCopy.disabled   = false;
   els.input.classList.remove("error");
   els.input.classList.add("success");
 }
@@ -584,19 +576,42 @@ function updateTzOffsets() {
   });
 }
 
-async function copyToClipboard(text, btn) {
+async function copyToClipboard(text, feedbackEl) {
+  if (!text) return;
+
   try {
     await navigator.clipboard.writeText(text);
-    const original = btn.innerHTML;
-    btn.classList.add("copied");
-    btn.innerHTML = `<span class="btn-icon">✓</span> Copied!`;
-    setTimeout(() => {
-      btn.classList.remove("copied");
-      btn.innerHTML = original;
-    }, 1400);
+
+    if (feedbackEl) {
+      feedbackEl.classList.add("copied");
+      setTimeout(() => {
+        feedbackEl.classList.remove("copied");
+      }, 950);
+    }
   } catch (e) {
     console.error("Clipboard write failed:", e);
   }
+}
+
+function bindCopyable(el, getText) {
+  if (!el || typeof getText !== "function") return;
+
+  const triggerCopy = () => {
+    const text = getText();
+    if (!text) return;
+    copyToClipboard(String(text), el);
+  };
+
+  el.addEventListener("click", event => {
+    event.stopPropagation();
+    triggerCopy();
+  });
+
+  el.addEventListener("keydown", event => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    triggerCopy();
+  });
 }
 
 function updateNowBadge() {
@@ -712,18 +727,14 @@ async function init() {
 
   document.addEventListener("click", () => closeTargetTzDropdown());
 
-  // ── Copy for Splunk ──
-  els.btnSplunk.addEventListener("click", () => {
-    if (!state.parsedMillis) return;
+  // ── Inline copy targets ──
+  bindCopyable(els.resultTime, () => (state.parsedMillis ? els.resultTime.textContent.trim() : ""));
+  bindCopyable(els.resultUnix, () => (state.parsedMillis ? els.resultUnix.textContent.trim() : ""));
+  bindCopyable(els.resultISO, () => (state.parsedMillis ? els.resultISO.textContent.trim() : ""));
+  bindCopyable(els.splunkText, () => {
+    if (!state.parsedMillis) return "";
     const targetDT = convertToTargetZone(state.parsedMillis);
-    const fragment = buildQueryFragment(targetDT);
-    copyToClipboard(fragment, els.btnSplunk);
-  });
-
-  // ── Copy time ──
-  els.btnCopy.addEventListener("click", () => {
-    if (!state.melbourneISO) return;
-    copyToClipboard(state.melbourneISO, els.btnCopy);
+    return buildQueryFragment(targetDT);
   });
 
   // ── Init tz offsets + live clock ──

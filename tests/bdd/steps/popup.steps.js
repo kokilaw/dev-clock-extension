@@ -319,18 +319,21 @@ Then('the new preferences should have active source timezone {string}', async fu
 });
 
 Then('the Splunk copy button should be enabled', async function () {
-  await expect(this.page.locator('#btnSplunk')).toBeEnabled();
+  await expect(this.page.locator('#splunkPreview')).toBeVisible();
+  await expect(this.page.locator('#splunkPreviewText.copyable')).toBeVisible();
 });
 
 Then('the Splunk copy button should be disabled', async function () {
-  await expect(this.page.locator('#btnSplunk')).toBeDisabled();
+  await expect(this.page.locator('#splunkPreview')).not.toBeVisible();
 });
 
 Then('the time copy button should be disabled', async function () {
-  await expect(this.page.locator('#btnCopy')).toBeDisabled();
+  await expect(this.page.locator('#resultCard')).not.toBeVisible();
 });
 
 Then('the copy action buttons should be enabled', async function () {
-  await expect(this.page.locator('#btnSplunk')).toBeEnabled();
-  await expect(this.page.locator('#btnCopy')).toBeEnabled();
+  await expect(this.page.locator('#resultTime.copyable')).toBeVisible();
+  await expect(this.page.locator('#resultUnix.copyable')).toBeVisible();
+  await expect(this.page.locator('#resultISO.copyable')).toBeVisible();
+  await expect(this.page.locator('#splunkPreviewText.copyable')).toBeVisible();
 });
