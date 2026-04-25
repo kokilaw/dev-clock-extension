@@ -5,7 +5,7 @@
 ![BDD Tested](https://img.shields.io/badge/BDD-Cucumber-23D96C)
 ![Browser Automation](https://img.shields.io/badge/Browser%20Automation-Playwright-2EAD33?logo=playwright&logoColor=white)
 
-DevClock is a compact Chrome extension that helps engineers convert timestamps from configurable source timezones into Australia/Melbourne time and generate copy-ready query windows for multiple providers.
+DevClock is a compact Chrome extension that helps engineers convert timestamps from configurable source timezones into a configurable local target timezone and generate copy-ready query windows for multiple providers.
 
 ## Why this exists
 
@@ -13,7 +13,7 @@ When troubleshooting logs, teams often receive timestamps from mixed regions and
 
 ## Features
 
-- Converts to `Australia/Melbourne` with DST-aware handling via Luxon
+- Converts to configured target timezone (`localTimezone`) with DST-aware handling via Luxon
 - Supports multiple input styles (natural language, epoch, ISO)
 - Generates provider-specific query windows (`±1 minute` by default)
 - Supports query output providers: `splunk`, `grafana`, `cloudwatch`
@@ -48,7 +48,7 @@ If needed, update it at `chrome://extensions/shortcuts`.
 ### 2) Use the popup
 
 Enter a timestamp, choose source timezone, and copy:
-- Melbourne converted time
+- Converted time in configured target timezone
 - Query fragment (provider-specific, ±1 minute window)
 
 Sample output (Splunk):
@@ -188,7 +188,7 @@ These run tests before bumping (`preversion`) and push commit + tag automaticall
 ## Run integration tests (BDD / Gherkin)
 
 This repo uses Cucumber (`.feature` files) with Playwright-powered browser steps.
-The tests open `dist/converter-popup.html` in a normal browser tab and validate behavior end-to-end.
+The tests start from `dist/converter-popup.html` in a normal browser tab and validate popup + options flows end-to-end.
 
 1. Install dependencies:
 
@@ -202,19 +202,20 @@ The tests open `dist/converter-popup.html` in a normal browser tab and validate 
 
    `npm run test:integration`
 
-Feature file location:
+Feature file locations:
 
 - `tests/bdd/features/popup_conversion.feature`
+- `tests/bdd/features/options_preferences.feature`
 
 Covered scenarios:
-- ISO UTC conversion to Melbourne time
+- ISO UTC conversion to configured target timezone
 - ISO 8601 with milliseconds (sub-second precision preserved)
 - Naive ISO interpreted using selected source timezone
 - Unix epoch seconds conversion + query preview window
 - Time-only input defaults to today's date in source timezone
 - Military time without colons (`1545` → 15:45)
 - Natural-language: `yesterday at 5pm`, `last Monday`, `October 30th 2pm`
-- DST cross-over offset validation (Melbourne vs. source zone)
+- DST cross-over offset validation (target vs. source zone)
 - `Z`-suffixed input ignores source timezone toggle
 - Toggle change updates conversion and query range instantly
 - Invalid input shows parse error and disables copy buttons
@@ -224,6 +225,11 @@ Covered scenarios:
 - Query preview/output switching for `splunk`, `grafana`, and `cloudwatch`
 - 12h/24h display mode rendering
 - Legacy `sourceTz` migration into shared preferences
+- Options page timezone combobox options include UTC offset labels
+- Options page provider combobox options render and save correctly
+- Options page source timezone add + duplicate prevention behavior
+- Options page invalid timezone validation behavior
+- Options page save/reload persistence for timezone, provider, and hour format
 
 ## Repository structure
 
