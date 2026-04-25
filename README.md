@@ -5,7 +5,7 @@
 ![BDD Tested](https://img.shields.io/badge/BDD-Cucumber-23D96C)
 ![Browser Automation](https://img.shields.io/badge/Browser%20Automation-Playwright-2EAD33?logo=playwright&logoColor=white)
 
-DevClock is a compact Chrome extension popup that helps engineers convert timestamps from common source timezones (US/Eastern, UTC, UK/London, Local) into Australia/Melbourne time and generate Splunk-ready query windows.
+DevClock is a compact Chrome extension that helps engineers convert timestamps from configurable source timezones into Australia/Melbourne time and generate copy-ready query windows for multiple providers.
 
 ## Why this exists
 
@@ -15,8 +15,11 @@ When troubleshooting logs, teams often receive timestamps from mixed regions and
 
 - Converts to `Australia/Melbourne` with DST-aware handling via Luxon
 - Supports multiple input styles (natural language, epoch, ISO)
-- Generates a Splunk window fragment (`±1 minute` by default)
-- Copy actions for converted time and Splunk fragment
+- Generates provider-specific query windows (`±1 minute` by default)
+- Supports query output providers: `splunk`, `grafana`, `cloudwatch`
+- Supports 12h/24h display modes from preferences
+- Source timezone toggles are configurable from the Preferences page
+- Copy actions for converted time and provider query fragment
 - BDD-style `.feature` coverage with Cucumber + Playwright
 
 ## Demo / screenshot
@@ -46,9 +49,9 @@ If needed, update it at `chrome://extensions/shortcuts`.
 
 Enter a timestamp, choose source timezone, and copy:
 - Melbourne converted time
-- Splunk fragment (±1 minute window)
+- Query fragment (provider-specific, ±1 minute window)
 
-Sample output:
+Sample output (Splunk):
 
 `_time >= "2024-06-10T14:29:00+10:00" AND _time <= "2024-06-10T14:31:00+10:00"`
 
@@ -86,12 +89,46 @@ Inputs are tried in priority order until one succeeds.
 | Last weekday + time | `last Monday 08:30`, `last Friday at 3pm` | |
 | Month + day + time | `October 30th 2pm`, `January 1st 9am` | Uses current year; DST-aware |
 
-### Timezone toggle behaviour
+## Preferences page
+
+Open popup → click **Preferences**.
+
+The settings page supports:
+- Local timezone override (`localTimezone`) used when source toggle is `LOCAL`
+- Source timezone list management (`sourceTimezones`)
+   - `UTC` and `LOCAL` are always preserved and non-removable
+   - duplicates are prevented
+- Active source timezone persistence (`activeSourceTimezone`)
+- Query provider selection (`splunk`, `grafana`, `cloudwatch`)
+- Time display mode (`24h` or `12h`)
+
+All preferences persist across browser restarts.
+
+### Timezone toggle behavior
 
 - All inputs **without** an explicit timezone are interpreted in the **selected source timezone**.
 - Inputs that carry explicit timezone information (`Z`, `±HH:MM` offset) ignore the toggle and use the declared offset.
 - Switching the toggle re-runs the conversion instantly — useful for comparing "same wall-clock time in different zones".
-- The selected timezone is persisted via `localStorage` and restored on next open.
+- The selected timezone is persisted in the shared preferences schema and restored on next open.
+- Source toggles in popup are rendered dynamically from configured `sourceTimezones`.
+
+### Query provider behavior
+
+Query preview and copy output follow the selected provider:
+- `splunk`: `_time >= "..." AND _time <= "..."`
+- `grafana`: `from=<epoch_ms>&to=<epoch_ms>`
+- `cloudwatch`: `filter @timestamp >= '...' and @timestamp <= '...'`
+
+### 12h/24h display behavior
+
+- `24h` mode uses `HH:mm:ss`
+- `12h` mode uses `h:mm:ss a`
+- Applies to human-facing popup time displays (source, converted, now badge)
+- Query timestamps remain machine-oriented provider output
+
+### Migration note (legacy users)
+
+On first load after upgrade, legacy `sourceTz` is migrated into the new preferences schema (`devClockPreferences`) and then removed.
 
 ## Tech stack
 
@@ -115,6 +152,9 @@ Building creates a minimal extension payload in `dist/` with only runtime files 
 - `manifest.json`
 - `converter-popup.html`
 - `converter-controller.js`
+- `options.html`
+- `options.js`
+- `preferences.js`
 - `lib/luxon.min.js`
 - `icons/icon16.png`, `icons/icon48.png`, `icons/icon128.png`
 
@@ -179,7 +219,11 @@ Covered scenarios:
 - Toggle change updates conversion and Splunk range instantly
 - Invalid input shows parse error and disables copy buttons
 - Auto-focus on popup open
-- Persistent toggle state across reload (via `localStorage`)
+- Persistent toggle state across reload (via shared preferences)
+- Dynamic source timezone toggle rendering from saved preferences
+- Query preview/output switching for `splunk`, `grafana`, and `cloudwatch`
+- 12h/24h display mode rendering
+- Legacy `sourceTz` migration into shared preferences
 
 ## Repository structure
 
@@ -205,6 +249,6 @@ dev-clock-extention/
 
 ## Roadmap ideas
 
-- Configurable Splunk window size in UI
-- Optional 12h/24h display toggle
+- Configurable query window size in UI
+- Additional query providers
 - One-click paste into active tab input (if permissions are added)
