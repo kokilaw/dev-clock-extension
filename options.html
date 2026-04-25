@@ -371,12 +371,12 @@
 
     <div class="card">
       <h2>Copy query provider</h2>
-      <label for="queryProvider">Provider</label>
-      <select id="queryProvider">
-        <option value="splunk">Splunk</option>
-        <option value="grafana">Grafana</option>
-        <option value="cloudwatch">CloudWatch</option>
-      </select>
+      <label for="queryProviderInput">Provider</label>
+      <div class="combo" id="queryProviderCombo">
+        <input id="queryProviderInput" type="text" placeholder="Select provider" autocomplete="off" />
+        <button id="queryProviderToggle" class="combo-toggle" type="button" aria-label="Toggle provider list">▾</button>
+        <ul id="queryProviderList" class="combo-list" role="listbox" aria-label="Provider options"></ul>
+      </div>
     </div>
 
     <div class="card">

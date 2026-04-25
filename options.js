@@ -19,9 +19,13 @@
     timezoneToAddToggle: document.getElementById("timezoneToAddToggle"),
     timezoneToAddList: document.getElementById("timezoneToAddList"),
 
+    queryProviderCombo: document.getElementById("queryProviderCombo"),
+    queryProviderInput: document.getElementById("queryProviderInput"),
+    queryProviderToggle: document.getElementById("queryProviderToggle"),
+    queryProviderList: document.getElementById("queryProviderList"),
+
     btnAddTimezone: document.getElementById("btnAddTimezone"),
     sourceTimezoneChips: document.getElementById("sourceTimezoneChips"),
-    queryProvider: document.getElementById("queryProvider"),
     hourFormatRadios: document.querySelectorAll('input[name="hourFormat"]'),
     btnSave: document.getElementById("btnSave"),
     btnReset: document.getElementById("btnReset"),
@@ -34,27 +38,45 @@
   let timezoneOptions = [];
   let activeComboKey = null;
 
+  const PROVIDER_OPTIONS = {
+    splunk: "Splunk",
+    grafana: "Grafana",
+    cloudwatch: "CloudWatch",
+  };
+
   const comboState = {
     local: { highlightedIndex: -1 },
     add: { highlightedIndex: -1 },
+    provider: { highlightedIndex: -1 },
   };
 
   const comboConfig = {
+    add: {
+      key: "add",
+      includeLocal: true,
+      mode: "timezone",
+      comboEl: () => els.timezoneToAddCombo,
+      inputEl: () => els.timezoneToAddInput,
+      listEl: () => els.timezoneToAddList,
+      toggleEl: () => els.timezoneToAddToggle,
+    },
     local: {
       key: "local",
       includeLocal: false,
+      mode: "timezone",
       comboEl: () => els.localTimezoneCombo,
       inputEl: () => els.localTimezoneInput,
       listEl: () => els.localTimezoneList,
       toggleEl: () => els.localTimezoneToggle,
     },
-    add: {
-      key: "add",
-      includeLocal: true,
-      comboEl: () => els.timezoneToAddCombo,
-      inputEl: () => els.timezoneToAddInput,
-      listEl: () => els.timezoneToAddList,
-      toggleEl: () => els.timezoneToAddToggle,
+    provider: {
+      key: "provider",
+      includeLocal: false,
+      mode: "provider",
+      comboEl: () => els.queryProviderCombo,
+      inputEl: () => els.queryProviderInput,
+      listEl: () => els.queryProviderList,
+      toggleEl: () => els.queryProviderToggle,
     },
   };
 
@@ -89,10 +111,60 @@
     return includeLocal ? ["LOCAL", ...timezoneOptions] : timezoneOptions;
   }
 
-  function filterComboboxOptions(options, query) {
+  function normalizeOffsetLabel(rawOffset) {
+    if (!rawOffset || rawOffset === "UTC" || rawOffset === "GMT") return "UTC+00:00";
+
+    const match = rawOffset.match(/(?:GMT|UTC)([+-])(\d{1,2})(?::?(\d{2}))?/i);
+    if (!match) return rawOffset.replace("GMT", "UTC");
+
+    const [, sign, h, m = "00"] = match;
+    return `UTC${sign}${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
+  }
+
+  function getOffsetLabelForZone(zone) {
+    const effectiveZone = zone === "LOCAL"
+      ? (currentPrefs?.localTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC")
+      : zone;
+
+    try {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: effectiveZone,
+        timeZoneName: "shortOffset",
+      }).formatToParts(new Date());
+
+      const tzPart = parts.find(p => p.type === "timeZoneName")?.value;
+      return normalizeOffsetLabel(tzPart || "UTC");
+    } catch {
+      return "UTC+00:00";
+    }
+  }
+
+  function getTimezoneOptionLabel(zone) {
+    return `${zone} (${getOffsetLabelForZone(zone)})`;
+  }
+
+  function getProviderOptionLabel(provider) {
+    return PROVIDER_OPTIONS[provider] || provider;
+  }
+
+  function getComboOptions(cfg) {
+    if (cfg.mode === "provider") return Object.keys(PROVIDER_OPTIONS);
+    return getComboboxOptions(cfg.includeLocal);
+  }
+
+  function getComboOptionLabel(cfg, value) {
+    if (cfg.mode === "provider") return getProviderOptionLabel(value);
+    return getTimezoneOptionLabel(value);
+  }
+
+  function filterComboboxOptions(cfg, options, query) {
     const normalized = (query || "").trim().toLowerCase();
     if (!normalized) return options;
-    return options.filter(zone => zone.toLowerCase().includes(normalized));
+
+    return options.filter(value => {
+      const label = getComboOptionLabel(cfg, value).toLowerCase();
+      return value.toLowerCase().includes(normalized) || label.includes(normalized);
+    });
   }
 
   function isValidTimezone(zone, allowLocal = false) {
@@ -121,15 +193,15 @@
     const listEl = cfg.listEl();
     const state = comboState[comboKey];
 
-    const allOptions = getComboboxOptions(cfg.includeLocal);
-    const filtered = filterComboboxOptions(allOptions, inputEl.value);
+    const allOptions = getComboOptions(cfg);
+    const filtered = filterComboboxOptions(cfg, allOptions, inputEl.value);
 
     listEl.innerHTML = "";
 
     if (!filtered.length) {
       const empty = document.createElement("li");
       empty.className = "combo-item empty";
-      empty.textContent = "No matching timezone";
+      empty.textContent = cfg.mode === "provider" ? "No matching provider" : "No matching timezone";
       listEl.appendChild(empty);
       return;
     }
@@ -138,16 +210,21 @@
       state.highlightedIndex = filtered.length - 1;
     }
 
-    filtered.forEach((zone, index) => {
+    filtered.forEach((value, index) => {
       const li = document.createElement("li");
       const isActive = index === state.highlightedIndex || (!inputEl.value && index === 0 && state.highlightedIndex === -1);
       li.className = `combo-item${isActive ? " active" : ""}`;
-      li.dataset.zone = zone;
-      li.textContent = zone;
+      li.dataset.value = value;
+      li.textContent = getComboOptionLabel(cfg, value);
 
       li.addEventListener("mousedown", event => {
         event.preventDefault();
-        inputEl.value = zone;
+        if (cfg.mode === "provider") {
+          inputEl.value = getProviderOptionLabel(value);
+          inputEl.dataset.value = value;
+        } else {
+          inputEl.value = value;
+        }
         closeAllCombos();
       });
 
@@ -171,7 +248,13 @@
     const listEl = cfg.listEl();
     const active = listEl.querySelector(".combo-item.active:not(.empty)");
     if (!active) return false;
-    cfg.inputEl().value = active.dataset.zone;
+    const value = active.dataset.value;
+    if (cfg.mode === "provider") {
+      cfg.inputEl().value = getProviderOptionLabel(value);
+      cfg.inputEl().dataset.value = value;
+    } else {
+      cfg.inputEl().value = value;
+    }
     closeAllCombos();
     return true;
   }
@@ -180,7 +263,7 @@
     const cfg = comboConfig[comboKey];
     const inputEl = cfg.inputEl();
     const state = comboState[comboKey];
-    const options = filterComboboxOptions(getComboboxOptions(cfg.includeLocal), inputEl.value);
+    const options = filterComboboxOptions(cfg, getComboOptions(cfg), inputEl.value);
     if (!options.length) return;
 
     const next = Math.max(0, Math.min(options.length - 1, state.highlightedIndex + delta));
@@ -214,7 +297,8 @@
 
   function renderFormFromPrefs() {
     els.localTimezoneInput.value = currentPrefs.localTimezone;
-    els.queryProvider.value = currentPrefs.queryProvider;
+    els.queryProviderInput.value = getProviderOptionLabel(currentPrefs.queryProvider);
+    els.queryProviderInput.dataset.value = currentPrefs.queryProvider;
 
     els.hourFormatRadios.forEach(r => {
       r.checked = r.value === currentPrefs.hourFormat;
@@ -228,7 +312,7 @@
 
     return {
       localTimezone: els.localTimezoneInput.value.trim(),
-      queryProvider: els.queryProvider.value,
+      queryProvider: els.queryProviderInput.dataset.value || currentPrefs.queryProvider,
       hourFormat: selectedHour,
       sourceTimezones: currentPrefs.sourceTimezones,
       activeSourceTimezone: currentPrefs.activeSourceTimezone,
@@ -293,10 +377,12 @@
 
     bindCombo("local");
     bindCombo("add");
+    bindCombo("provider");
 
     document.addEventListener("click", event => {
       if (els.localTimezoneCombo.contains(event.target)) return;
       if (els.timezoneToAddCombo.contains(event.target)) return;
+      if (els.queryProviderCombo.contains(event.target)) return;
       closeAllCombos();
     });
 
@@ -326,6 +412,11 @@
 
       if (!isValidTimezone(patch.localTimezone)) {
         setStatus(`Invalid timezone: ${patch.localTimezone}`, "err");
+        return;
+      }
+
+      if (!PROVIDER_OPTIONS[patch.queryProvider]) {
+        setStatus("Invalid provider selection", "err");
         return;
       }
 
