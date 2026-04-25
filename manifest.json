@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "LogTime Sync",
+  "name": "DevClock",
   "version": "1.0.0",
   "description": "Convert US/UK/UTC timestamps to Australia/Melbourne time. Built for engineers chasing logs in Splunk.",
   "action": {
     "default_popup": "converter-popup.html",
-    "default_title": "LogTime Sync",
+    "default_title": "DevClock",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -18,7 +18,7 @@
         "default": "Ctrl+Shift+T",
         "mac": "Command+Shift+T"
       },
-      "description": "Open LogTime Sync"
+      "description": "Open DevClock"
     }
   },
   "permissions": [],

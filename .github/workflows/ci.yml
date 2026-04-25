@@ -89,5 +89,5 @@ jobs:
         with:
           name: extension-package
           retention-days: 7
-          path: log-time-sync-extension.zip
+          path: dev-clock-extention.zip
           if-no-files-found: ignore

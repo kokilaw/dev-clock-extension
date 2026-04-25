@@ -16,7 +16,7 @@ const TZ_IANA = {
   Local: DateTime.local().zoneName,
 };
 
-Given('I open the LogTime Sync popup', async function () {
+Given('I open the DevClock popup', async function () {
   this.selectedTimezone = this.selectedTimezone || 'US/Eastern';
   await expect(this.page.locator('#timeInput')).toBeVisible();
 });

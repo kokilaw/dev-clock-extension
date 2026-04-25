@@ -1,5 +1,5 @@
 /**
- * LogTime Sync — converter-controller.js
+ * DevClock — converter-controller.js
  * ─────────────────────────────────────────────────────────────────────────────
  * Converts US/UK/UTC timestamps to Australia/Melbourne time.
  * Stack: Luxon (timezone math + lightweight NLP parsing)

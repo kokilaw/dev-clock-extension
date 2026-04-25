@@ -1,11 +1,11 @@
-# LogTime Sync
+# DevClock
 
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
 ![BDD Tested](https://img.shields.io/badge/BDD-Cucumber-23D96C)
 ![Browser Automation](https://img.shields.io/badge/Browser%20Automation-Playwright-2EAD33?logo=playwright&logoColor=white)
 
-LogTime Sync is a compact Chrome extension popup that helps engineers convert timestamps from common source timezones (US/Eastern, UTC, UK/London, Local) into Australia/Melbourne time and generate Splunk-ready query windows.
+DevClock is a compact Chrome extension popup that helps engineers convert timestamps from common source timezones (US/Eastern, UTC, UK/London, Local) into Australia/Melbourne time and generate Splunk-ready query windows.
 
 ## Why this exists
 
@@ -23,7 +23,7 @@ When troubleshooting logs, teams often receive timestamps from mixed regions and
 
 Add a screenshot at `docs/popup-screenshot.png`, then use:
 
-`![LogTime Sync popup](docs/popup-screenshot.png)`
+`![DevClock popup](docs/popup-screenshot.png)`
 
 ## Quick start
 
@@ -170,7 +170,7 @@ Covered scenarios:
 ## Repository structure
 
 ```
-log-time-sync/
+dev-clock-extention/
 ├── manifest.json
 ├── converter-popup.html
 ├── converter-controller.js

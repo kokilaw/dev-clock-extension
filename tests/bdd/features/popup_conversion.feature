@@ -1,10 +1,10 @@
-Feature: LogTime Sync popup conversions
+Feature: DevClock popup conversions
   As an engineer investigating logs
   I want to convert timestamps into Australia/Melbourne time
   So that I can quickly produce valid Splunk query windows
 
   Background:
-    Given I open the LogTime Sync popup
+    Given I open the DevClock popup
 
   Scenario: Convert ISO UTC input to Melbourne time
     When I enter the timestamp "2024-06-10T14:30:00Z"
