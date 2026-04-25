@@ -31,12 +31,22 @@ const TZ_DISPLAY_NAMES = {
   "LOCAL":            "LOCAL",
 };
 
+const TZ_BUTTON_IDS = {
+  "America/New_York": "tz-us",
+  "UTC": "tz-utc",
+  "Europe/London": "tz-uk",
+  "LOCAL": "tz-local",
+};
+
+const DEFAULT_SOURCE_TIMEZONES = ["America/New_York", "UTC", "Europe/London", "LOCAL"];
+
 // ── State ──────────────────────────────────────────────────────────────────
 
 const state = {
   sourceTz:     "America/New_York",
   parsedMillis: null,          // UTC epoch ms of the parsed moment
   melbourneISO: null,          // ISO string in Melbourne time
+  prefs:        null,
 };
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
@@ -46,6 +56,7 @@ const $ = id => document.getElementById(id);
 const els = {
   input:         $("timeInput"),
   clearBtn:      $("clearBtn"),
+  tzToggles:     $("tzToggles"),
   resultEmpty:   $("resultEmpty"),
   resultCard:    $("resultCard"),
   resultFromTz:  $("resultFromTz"),
@@ -59,6 +70,7 @@ const els = {
   splunkText:    $("splunkPreviewText"),
   btnSplunk:     $("btnSplunk"),
   btnCopy:       $("btnCopy"),
+  btnOpenPreferences: $("btnOpenPreferences"),
   nowBadge:      $("nowBadge").querySelector("span"),
 };
 
@@ -68,9 +80,90 @@ const els = {
  * Returns the current UTC offset string (e.g. "−05:00") for a given IANA zone.
  */
 function getOffsetLabel(ianaZone) {
-  if (ianaZone === "LOCAL") return Luxon.DateTime.local().toFormat("ZZ");
+  if (ianaZone === "LOCAL") {
+    const localZone = state.prefs?.localTimezone || Luxon.DateTime.local().zoneName;
+    return Luxon.DateTime.now().setZone(localZone).toFormat("ZZ");
+  }
   const dt = Luxon.DateTime.now().setZone(ianaZone);
   return dt.toFormat("ZZ");
+}
+
+function normalizeSourceTimezones(timezones) {
+  const normalized = [];
+
+  for (const zone of Array.isArray(timezones) ? timezones : []) {
+    if (typeof zone !== "string" || !zone.trim()) continue;
+    if (!normalized.includes(zone)) normalized.push(zone);
+  }
+
+  for (const required of ["UTC", "LOCAL"]) {
+    if (!normalized.includes(required)) normalized.push(required);
+  }
+
+  if (!normalized.length) return [...DEFAULT_SOURCE_TIMEZONES];
+  return normalized;
+}
+
+function getSourceZoneName(sourceTz) {
+  if (sourceTz === "LOCAL") {
+    return state.prefs?.localTimezone || Luxon.DateTime.local().zoneName;
+  }
+
+  return sourceTz;
+}
+
+function getTimezoneDisplayName(timezone) {
+  if (TZ_DISPLAY_NAMES[timezone]) return TZ_DISPLAY_NAMES[timezone];
+  if (typeof timezone !== "string") return "Unknown";
+
+  const tail = timezone.includes("/") ? timezone.split("/").pop() : timezone;
+  return tail.replace(/_/g, " ");
+}
+
+function createTimezoneButton(timezone) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "tz-btn";
+  btn.dataset.tz = timezone;
+
+  if (TZ_BUTTON_IDS[timezone]) {
+    btn.id = TZ_BUTTON_IDS[timezone];
+  }
+
+  const name = document.createElement("span");
+  name.className = "tz-btn-name";
+  name.textContent = getTimezoneDisplayName(timezone);
+
+  const offset = document.createElement("span");
+  offset.className = "tz-btn-offset";
+  offset.textContent = getOffsetLabel(timezone);
+
+  btn.appendChild(name);
+  btn.appendChild(offset);
+  return btn;
+}
+
+function renderTimezoneToggles(timezones, activeTz) {
+  if (!els.tzToggles) return;
+
+  const zones = normalizeSourceTimezones(timezones);
+  const selected = zones.includes(activeTz) ? activeTz : zones[0];
+
+  els.tzToggles.innerHTML = "";
+
+  for (const zone of zones) {
+    const btn = createTimezoneButton(zone);
+
+    btn.addEventListener("click", async () => {
+      applyActiveTimezone(zone);
+      await saveActiveTimezonePreference(zone);
+      runConversion();
+    });
+
+    els.tzToggles.appendChild(btn);
+  }
+
+  applyActiveTimezone(selected);
 }
 
 /**
@@ -109,7 +202,7 @@ function parseTimestamp(raw, sourceTz) {
   // 2.5 — 4-digit military time (e.g. "1545") — route directly to natural parser
   //        to avoid Luxon interpreting it as year 1545 via fromISO
   if (/^\d{4}$/.test(str)) {
-    const actualZoneEarly = sourceTz === "LOCAL" ? Luxon.DateTime.local().zoneName : sourceTz;
+    const actualZoneEarly = getSourceZoneName(sourceTz);
     const nowEarly = Luxon.DateTime.now().setZone(actualZoneEarly);
     const militaryDT = parseNaturalTimestamp(str, nowEarly, actualZoneEarly);
     if (militaryDT) return { millis: militaryDT.toMillis() };
@@ -124,13 +217,13 @@ function parseTimestamp(raw, sourceTz) {
       return { millis: isoAttempt.toMillis() };
     }
     // No tz — interpret in sourceTz
-    const actualZone = sourceTz === "LOCAL" ? Luxon.DateTime.local().zoneName : sourceTz;
+    const actualZone = getSourceZoneName(sourceTz);
     const reanchored = Luxon.DateTime.fromISO(str, { zone: actualZone });
     if (reanchored.isValid) return { millis: reanchored.toMillis() };
   }
 
   // 4 — Lightweight natural language parser
-  const actualZone  = sourceTz === "LOCAL" ? Luxon.DateTime.local().zoneName : sourceTz;
+  const actualZone  = getSourceZoneName(sourceTz);
   const nowInSource = Luxon.DateTime.now().setZone(actualZone);
   const natural     = parseNaturalTimestamp(str, nowInSource, actualZone);
   if (natural) return { millis: natural.toMillis() };
@@ -300,12 +393,10 @@ function showResult(millis) {
   state.melbourneISO = melb.toISO({ suppressMilliseconds: true }); // clipboard copy always suppresses ms
 
   // Source time display
-  const actualZone  = state.sourceTz === "LOCAL"
-    ? Luxon.DateTime.local().zoneName
-    : state.sourceTz;
+  const actualZone  = getSourceZoneName(state.sourceTz);
   const sourceDT    = Luxon.DateTime.fromMillis(millis, { zone: actualZone });
 
-  els.resultFromTz.textContent   = TZ_DISPLAY_NAMES[state.sourceTz] || state.sourceTz;
+  els.resultFromTz.textContent   = getTimezoneDisplayName(state.sourceTz);
   els.resultFromTime.textContent = sourceDT.toFormat("HH:mm:ss (dd LLL yyyy)");
 
   // Melbourne display
@@ -360,16 +451,10 @@ function runConversion() {
 }
 
 function updateTzOffsets() {
-  // Update offset labels on buttons to reflect current DST
-  const zones = ["America/New_York", "UTC", "Europe/London"];
   document.querySelectorAll(".tz-btn[data-tz]").forEach(btn => {
     const tz = btn.dataset.tz;
     const offsetEl = btn.querySelector(".tz-btn-offset");
-    if (tz === "UTC") { offsetEl.textContent = "±00:00"; return; }
-    if (tz === "LOCAL") {
-      offsetEl.textContent = getOffsetLabel("LOCAL");
-      return;
-    }
+    if (!offsetEl) return;
     offsetEl.textContent = getOffsetLabel(tz);
   });
 }
@@ -406,16 +491,21 @@ function applyActiveTimezone(timezone) {
 
 async function loadActiveTimezonePreference() {
   if (globalThis.DevClockPreferences?.getPreferences) {
-    const prefs = await globalThis.DevClockPreferences.getPreferences();
-    return prefs?.activeSourceTimezone || null;
+    state.prefs = await globalThis.DevClockPreferences.getPreferences();
+    return state.prefs?.activeSourceTimezone || null;
   }
+
+  state.prefs = {
+    sourceTimezones: [...DEFAULT_SOURCE_TIMEZONES],
+    localTimezone: Luxon.DateTime.local().zoneName,
+  };
 
   return localStorage.getItem("sourceTz");
 }
 
 async function saveActiveTimezonePreference(timezone) {
   if (globalThis.DevClockPreferences?.savePreferences) {
-    await globalThis.DevClockPreferences.savePreferences({ activeSourceTimezone: timezone });
+    state.prefs = await globalThis.DevClockPreferences.savePreferences({ activeSourceTimezone: timezone });
     return;
   }
 
@@ -447,17 +537,7 @@ async function init() {
 
   // ── Restore saved timezone ──
   const savedTz = await loadActiveTimezonePreference();
-  applyActiveTimezone(savedTz);
-
-  // ── Timezone toggles ──
-  document.querySelectorAll(".tz-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      applyActiveTimezone(btn.dataset.tz);
-      await saveActiveTimezonePreference(btn.dataset.tz);
-      // Re-run conversion with same input but new source tz
-      runConversion();
-    });
-  });
+  renderTimezoneToggles(state.prefs?.sourceTimezones, savedTz || state.sourceTz);
 
   // ── Copy for Splunk ──
   els.btnSplunk.addEventListener("click", () => {
@@ -477,6 +557,16 @@ async function init() {
   updateTzOffsets();
   updateNowBadge();
   setInterval(updateNowBadge, 1000);
+
+  // ── Open preferences page ──
+  els.btnOpenPreferences?.addEventListener("click", () => {
+    if (globalThis.chrome?.runtime?.openOptionsPage) {
+      globalThis.chrome.runtime.openOptionsPage();
+      return;
+    }
+
+    globalThis.open("options.html", "_blank");
+  });
 
   // ── Focus input on open ──
   els.input.focus();

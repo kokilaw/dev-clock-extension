@@ -197,6 +197,7 @@
     .tz-toggles {
       display: flex;
       gap: 6px;
+      flex-wrap: wrap;
     }
 
     .tz-btn {
@@ -483,6 +484,31 @@
       background: var(--bg-surface);
     }
 
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .footer-link-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: 4px;
+      padding: 2px 7px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.04em;
+      transition: all 0.12s;
+    }
+
+    .footer-link-btn:hover {
+      border-color: #3a4052;
+      color: var(--text-primary);
+      background: var(--bg-raised);
+    }
+
     .footer-hint {
       font-size: 9px;
       color: var(--text-muted);
@@ -552,24 +578,7 @@
   <!-- Source Timezone Toggles -->
   <div class="tz-zone">
     <div class="tz-label">Source Timezone</div>
-    <div class="tz-toggles">
-      <button class="tz-btn active" data-tz="America/New_York" id="tz-us">
-        <span class="tz-btn-name">US/Eastern</span>
-        <span class="tz-btn-offset" id="offset-us">—</span>
-      </button>
-      <button class="tz-btn" data-tz="UTC" id="tz-utc">
-        <span class="tz-btn-name">UTC</span>
-        <span class="tz-btn-offset">±00:00</span>
-      </button>
-      <button class="tz-btn" data-tz="Europe/London" id="tz-uk">
-        <span class="tz-btn-name">UK/London</span>
-        <span class="tz-btn-offset" id="offset-uk">—</span>
-      </button>
-      <button class="tz-btn" data-tz="LOCAL" id="tz-local">
-        <span class="tz-btn-name">Local</span>
-        <span class="tz-btn-offset" id="offset-local">—</span>
-      </button>
-    </div>
+    <div class="tz-toggles" id="tzToggles"></div>
   </div>
 
   <!-- Result -->
@@ -616,9 +625,12 @@
 
   <!-- Footer -->
   <div class="footer">
-    <span class="footer-hint">
-      <kbd>Enter</kbd> convert &nbsp; <kbd>Esc</kbd> clear
-    </span>
+    <div class="footer-left">
+      <span class="footer-hint">
+        <kbd>Enter</kbd> convert &nbsp; <kbd>Esc</kbd> clear
+      </span>
+      <button type="button" class="footer-link-btn" id="btnOpenPreferences">Preferences</button>
+    </div>
     <span class="now-badge" id="nowBadge">now: <span>—</span></span>
   </div>
 
