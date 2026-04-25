@@ -10,6 +10,7 @@ const requiredFiles = [
   'options.html',
   'options.js',
   'preferences.js',
+  'timestamp-parser.js',
   'converter-controller.js',
   path.join('lib', 'luxon.min.js'),
   path.join('icons', 'icon16.png'),

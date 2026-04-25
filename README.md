@@ -14,13 +14,13 @@ When troubleshooting logs, teams often receive timestamps from mixed regions and
 ## Features
 
 - Converts to configured target timezone (`localTimezone`) with DST-aware handling via Luxon
-- Supports multiple input styles (natural language, epoch, ISO)
+- Supports multiple input styles (epoch, ISO, shorthand, natural language, and log-native formats)
 - Generates provider-specific query windows (`±1 minute` by default)
 - Supports query output providers: `splunk`, `grafana`, `cloudwatch`
 - Supports 12h/24h display modes from preferences
 - Source timezone toggles are configurable from the Preferences page
 - Copy actions for converted time and provider query fragment
-- BDD-style `.feature` coverage with Cucumber + Playwright
+- Separate unit + integration coverage for parser logic and UI flows
 
 ## Demo / screenshot
 
@@ -59,6 +59,13 @@ Sample output (Splunk):
 
 Inputs are tried in priority order until one succeeds.
 
+### Input cleanup / shorthand
+
+| Format | Example | Notes |
+|--------|---------|-------|
+| Bracket / noise wrapped input | `[2024-06-10T14:30:00Z]`, `("2024-06-10T14:30:00Z")` | Surrounding wrappers and extra whitespace are stripped before parsing |
+| Relative shorthand | `-2h`, `-30m`, `now-1h`, `-45s` | Relative to current time in the effective source timezone |
+
 ### Unix Epoch
 
 | Format | Example | Notes |
@@ -75,6 +82,22 @@ Inputs are tried in priority order until one succeeds.
 | With explicit offset | `2024-06-10T09:00:00-05:00` | Offset respected as-is |
 | Naive (no timezone) | `2024-06-10T14:30:00` | Interpreted in selected source timezone |
 | Space separator | `2026-04-25 04:15Z` | Luxon accepts both `T` and space |
+| With trailing TZ abbreviation | `2026-04-25T14:30:00 PST` | Trailing abbreviation is resolved locally for that parse only |
+
+### Log-native / loose parser formats
+
+| Format | Example | Notes |
+|--------|---------|-------|
+| Apache CLF-style | `10/Oct/2000:13:55:36 -0700` | Parsed through the log-native fallback pipeline |
+| Syslog-like timestamp | `Oct 10 13:55:36` | Useful for server / daemon log entries |
+| Space-separated datetime with ms | `2026-04-25 14:30:22.455` | Accepted by the loose parser stage |
+| Time with milliseconds | `14:30:22.455` | Defaults to today when no date component is present |
+
+### Timezone abbreviations
+
+| Format | Example | Notes |
+|--------|---------|-------|
+| Trailing abbreviation | `2026-04-25 14:30 EST`, `2026-04-25 14:30 AEDT`, `2026-04-25 14:30 BST` | Uses `timezoneAbbreviations` to resolve to an IANA zone locally for the current call |
 
 ### Natural Language
 
@@ -88,6 +111,7 @@ Inputs are tried in priority order until one succeeds.
 | Tomorrow + time | `tomorrow 9am` | |
 | Last weekday + time | `last Monday 08:30`, `last Friday at 3pm` | |
 | Month + day + time | `October 30th 2pm`, `January 1st 9am` | Uses current year; DST-aware |
+| chrono fallback phrases | `next friday 4pm`, `2 hours ago`, `tomorrow noon` | Parsed via `chrono` when the lightweight parser does not match |
 
 ## Preferences page
 
@@ -134,7 +158,9 @@ On first load after upgrade, legacy `sourceTz` is migrated into the new preferen
 
 - HTML/CSS popup UI
 - Vanilla JavaScript logic in `converter-controller.js`
+- Shared parser module in `timestamp-parser.js`
 - Luxon (local bundle) in `lib/luxon.min.js`
+- `chrono`, `anyDateParser`, and timezone abbreviation resolution available as globals
 - Chrome Extension Manifest V3 (`manifest.json`)
 
 ### Luxon management
@@ -152,6 +178,7 @@ Building creates a minimal extension payload in `dist/` with only runtime files 
 - `manifest.json`
 - `converter-popup.html`
 - `converter-controller.js`
+- `timestamp-parser.js`
 - `options.html`
 - `options.js`
 - `preferences.js`
@@ -183,7 +210,24 @@ These run tests before bumping (`preversion`) and push commit + tag automaticall
 
 - The popup uses local Luxon (`lib/luxon.min.js`) to stay MV3-compatible.
 - No remote CDN runtime scripts are required.
-- Core conversion logic is kept in `converter-controller.js` helper functions for portability.
+- Parsing logic is isolated in `timestamp-parser.js` so it can be unit-tested separately from popup UI wiring.
+- `converter-controller.js` remains the popup/controller layer and delegates parsing to the shared parser module.
+
+## Run unit tests
+
+The timestamp parsing pipeline has a standalone unit suite separate from browser integration coverage.
+
+Run it with:
+
+`npm run test:unit`
+
+Current unit coverage includes:
+- Existing epoch, ISO, military-time, and lightweight natural-language scenarios
+- Bracket / noise normalization
+- Relative shorthand like `-2h`, `-30m`, and `now-1h`
+- Trailing timezone abbreviation resolution
+- `anyDateParser` fallback for log-native formats
+- Time-only loose-parser results defaulting to today
 
 ## Run integration tests (BDD / Gherkin)
 
@@ -212,7 +256,7 @@ Covered scenarios:
 - ISO 8601 with milliseconds (sub-second precision preserved)
 - Naive ISO interpreted using selected source timezone
 - Unix epoch seconds conversion + query preview window
-- Time-only input defaults to today's date in source timezone
+- Existing time-only input behavior remains covered end-to-end
 - Military time without colons (`1545` → 15:45)
 - Natural-language: `yesterday at 5pm`, `last Monday`, `October 30th 2pm`
 - DST cross-over offset validation (target vs. source zone)
@@ -238,6 +282,7 @@ dev-clock-extention/
 ├── manifest.json
 ├── converter-popup.html
 ├── converter-controller.js
+├── timestamp-parser.js
 ├── lib/
 │   └── luxon.min.js
 ├── icons/
@@ -245,10 +290,12 @@ dev-clock-extention/
 │   ├── build-extension.js
 │   └── sync-luxon.js
 ├── tests/
-│   └── bdd/
-│       ├── features/
-│       ├── steps/
-│       └── support/
+│   ├── bdd/
+│   │   ├── features/
+│   │   ├── steps/
+│   │   └── support/
+│   └── unit/
+│       └── timestamp-parser.test.js
 ├── package.json
 └── playwright.config.js
 ```

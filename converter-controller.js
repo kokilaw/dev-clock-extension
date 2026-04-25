@@ -14,9 +14,14 @@
 "use strict";
 
 const Luxon = globalThis.luxon || globalThis.Luxon;
+const Parser = globalThis.DevClockTimestampParser;
 
 if (!Luxon || !Luxon.DateTime) {
   throw new Error("Luxon failed to load. Ensure converter-popup.html loads lib/luxon.min.js before converter-controller.js.");
+}
+
+if (!Parser || typeof Parser.parseTimestamp !== "function") {
+  throw new Error("Timestamp parser failed to load. Ensure converter-popup.html loads timestamp-parser.js before converter-controller.js.");
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -204,47 +209,10 @@ function toSplunkISO(luxonDT) {
  * Returns: { millis: number } on success, { error: string } on failure.
  */
 function parseTimestamp(raw, sourceTz) {
-  const str = raw.trim();
-  if (!str) return { error: "empty" };
-
-  // 1 & 2 — Epoch integers (10 or 13 digits, optional ms suffix)
-  if (/^\d{10}$/.test(str)) {
-    return { millis: parseInt(str, 10) * 1000 };
-  }
-  if (/^\d{13}$/.test(str)) {
-    return { millis: parseInt(str, 10) };
-  }
-
-  // 2.5 — 4-digit military time (e.g. "1545") — route directly to natural parser
-  //        to avoid Luxon interpreting it as year 1545 via fromISO
-  if (/^\d{4}$/.test(str)) {
-    const actualZoneEarly = getSourceZoneName(sourceTz);
-    const nowEarly = Luxon.DateTime.now().setZone(actualZoneEarly);
-    const militaryDT = parseNaturalTimestamp(str, nowEarly, actualZoneEarly);
-    if (militaryDT) return { millis: militaryDT.toMillis() };
-    return { error: `Unable to parse date: "${str}"` };
-  }
-
-  // 3 — ISO 8601 (with or without timezone info)
-  const isoAttempt = Luxon.DateTime.fromISO(str);
-  if (isoAttempt.isValid) {
-    if (str.match(/[Zz]|[+-]\d{2}:?\d{2}/)) {
-      // Has explicit tz — trust it
-      return { millis: isoAttempt.toMillis() };
-    }
-    // No tz — interpret in sourceTz
-    const actualZone = getSourceZoneName(sourceTz);
-    const reanchored = Luxon.DateTime.fromISO(str, { zone: actualZone });
-    if (reanchored.isValid) return { millis: reanchored.toMillis() };
-  }
-
-  // 4 — Lightweight natural language parser
-  const actualZone  = getSourceZoneName(sourceTz);
-  const nowInSource = Luxon.DateTime.now().setZone(actualZone);
-  const natural     = parseNaturalTimestamp(str, nowInSource, actualZone);
-  if (natural) return { millis: natural.toMillis() };
-
-  return { error: `Unable to parse date: "${str}"` };
+  return Parser.parseTimestamp(raw, sourceTz, {
+    localTimezone: state.prefs?.localTimezone,
+    now: Luxon.DateTime.now(),
+  });
 }
 
 function parseNaturalTimestamp(raw, nowInSource, zone) {
