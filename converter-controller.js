@@ -23,6 +23,7 @@ if (!Luxon || !Luxon.DateTime) {
 
 const TARGET_TZ    = "Australia/Melbourne";
 const SPLUNK_WINDOW = 1; // ± minutes for the Splunk fragment
+const PREFERENCES_STORAGE_KEY = "devClockPreferences";
 
 const TZ_DISPLAY_NAMES = {
   "America/New_York": "US/ET",
@@ -583,6 +584,23 @@ async function saveActiveTimezonePreference(timezone) {
   localStorage.setItem("sourceTz", timezone);
 }
 
+async function refreshPreferencesFromStorage() {
+  if (!globalThis.DevClockPreferences?.getPreferences) return;
+
+  state.prefs = await globalThis.DevClockPreferences.getPreferences();
+  state.queryProvider = state.prefs?.queryProvider || "splunk";
+  state.hourFormat = state.prefs?.hourFormat || "24h";
+
+  renderTimezoneToggles(state.prefs?.sourceTimezones, state.prefs?.activeSourceTimezone || state.sourceTz);
+  applyProviderUi();
+  updateTzOffsets();
+  updateNowBadge();
+
+  if (state.parsedMillis) {
+    showResult(state.parsedMillis);
+  }
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 
 async function init() {
@@ -639,6 +657,26 @@ async function init() {
 
     globalThis.open("options.html", "_blank");
   });
+
+  // ── Live preference sync (options page changes) ──
+  if (globalThis.chrome?.storage?.onChanged) {
+    globalThis.chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName !== "local") return;
+      if (!changes[PREFERENCES_STORAGE_KEY]) return;
+
+      refreshPreferencesFromStorage().catch(err => {
+        console.error("Failed to refresh preferences:", err);
+      });
+    });
+  } else {
+    globalThis.addEventListener("storage", event => {
+      if (![PREFERENCES_STORAGE_KEY, "sourceTz"].includes(event.key)) return;
+
+      refreshPreferencesFromStorage().catch(err => {
+        console.error("Failed to refresh preferences:", err);
+      });
+    });
+  }
 
   // ── Focus input on open ──
   els.input.focus();
