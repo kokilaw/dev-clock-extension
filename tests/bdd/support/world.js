@@ -9,7 +9,7 @@ const {
   AfterAll,
 } = require('@cucumber/cucumber');
 
-const popupFile = path.resolve(__dirname, '../../../dist/popup.html');
+const popupFile = path.resolve(__dirname, '../../../dist/converter-popup.html');
 const popupUrl = pathToFileURL(popupFile).href;
 
 let browser;

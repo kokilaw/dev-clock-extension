@@ -1,5 +1,5 @@
 /**
- * LogTime Sync — popup.js
+ * LogTime Sync — converter-controller.js
  * ─────────────────────────────────────────────────────────────────────────────
  * Converts US/UK/UTC timestamps to Australia/Melbourne time.
  * Stack: Luxon (timezone math + lightweight NLP parsing)
@@ -16,7 +16,7 @@
 const Luxon = globalThis.luxon || globalThis.Luxon;
 
 if (!Luxon || !Luxon.DateTime) {
-  throw new Error("Luxon failed to load. Ensure popup.html loads lib/luxon.min.js before popup.js.");
+  throw new Error("Luxon failed to load. Ensure converter-popup.html loads lib/luxon.min.js before converter-controller.js.");
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────

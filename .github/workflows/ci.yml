@@ -6,8 +6,8 @@ on:
     paths:
       - '.github/workflows/ci.yml'
       - 'manifest.json'
-      - 'popup.html'
-      - 'popup.js'
+      - 'converter-popup.html'
+      - 'converter-controller.js'
       - 'lib/**'
       - 'icons/**'
       - 'scripts/**'
@@ -19,8 +19,8 @@ on:
     paths:
       - '.github/workflows/ci.yml'
       - 'manifest.json'
-      - 'popup.html'
-      - 'popup.js'
+      - 'converter-popup.html'
+      - 'converter-controller.js'
       - 'lib/**'
       - 'icons/**'
       - 'scripts/**'

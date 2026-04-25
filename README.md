@@ -96,7 +96,7 @@ Inputs are tried in priority order until one succeeds.
 ## Tech stack
 
 - HTML/CSS popup UI
-- Vanilla JavaScript logic in `popup.js`
+- Vanilla JavaScript logic in `converter-controller.js`
 - Luxon (local bundle) in `lib/luxon.min.js`
 - Chrome Extension Manifest V3 (`manifest.json`)
 
@@ -113,8 +113,8 @@ This keeps the extension runtime local-file requirement intact while avoiding ma
 Building creates a minimal extension payload in `dist/` with only runtime files required by Chrome:
 
 - `manifest.json`
-- `popup.html`
-- `popup.js`
+- `converter-popup.html`
+- `converter-controller.js`
 - `lib/luxon.min.js`
 - `icons/icon16.png`, `icons/icon48.png`, `icons/icon128.png`
 
@@ -129,12 +129,12 @@ This keeps development/test tooling out of the installed extension.
 
 - The popup uses local Luxon (`lib/luxon.min.js`) to stay MV3-compatible.
 - No remote CDN runtime scripts are required.
-- Core conversion logic is kept in `popup.js` helper functions for portability.
+- Core conversion logic is kept in `converter-controller.js` helper functions for portability.
 
 ## Run integration tests (BDD / Gherkin)
 
 This repo uses Cucumber (`.feature` files) with Playwright-powered browser steps.
-The tests open `dist/popup.html` in a normal browser tab and validate behavior end-to-end.
+The tests open `dist/converter-popup.html` in a normal browser tab and validate behavior end-to-end.
 
 1. Install dependencies:
 
@@ -172,8 +172,8 @@ Covered scenarios:
 ```
 log-time-sync/
 ├── manifest.json
-├── popup.html
-├── popup.js
+├── converter-popup.html
+├── converter-controller.js
 ├── lib/
 │   └── luxon.min.js
 ├── icons/
