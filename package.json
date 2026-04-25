@@ -7,6 +7,11 @@
     "prebuild:extension": "npm run sync:luxon",
     "build:extension": "node scripts/build-extension.js",
     "package:extension": "npm run build:extension && cd dist && rm -f ../dev-clock-extention-v*.zip && zip -r ../dev-clock-extention-v$npm_package_version.zip .",
+    "preversion": "npm run test:integration",
+    "release:patch": "npm version patch",
+    "release:minor": "npm version minor",
+    "release:major": "npm version major",
+    "postversion": "git push && git push --tags",
     "test:integration": "npm run build:extension && cucumber-js --require tests/bdd/support/world.js --require tests/bdd/steps/**/*.js tests/bdd/features/**/*.feature",
     "test:integration:ci": "npm run build:extension && mkdir -p reports && cucumber-js --require tests/bdd/support/world.js --require tests/bdd/steps/**/*.js --format progress --format html:reports/cucumber-report.html --format json:reports/cucumber-report.json --format junit:reports/cucumber-report.xml tests/bdd/features/**/*.feature"
   },

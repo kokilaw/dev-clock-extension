@@ -53,6 +53,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Resolve package version
+        id: pkg
+        run: echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+
       - name: Cache Playwright browsers
         id: playwright-cache
         uses: actions/cache@v4
@@ -72,6 +76,9 @@ jobs:
       - name: Build extension package
         run: npm run package:extension
 
+      - name: Prepare snapshot artifact
+        run: cp dev-clock-extention-v${{ steps.pkg.outputs.version }}.zip dev-clock-extention-snapshot-${{ github.sha }}.zip
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -87,7 +94,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: extension-package
+          name: dev-clock-extention-snapshot-${{ github.sha }}
           retention-days: 7
-          path: dev-clock-extention-v*.zip
+          path: dev-clock-extention-snapshot-${{ github.sha }}.zip
           if-no-files-found: ignore

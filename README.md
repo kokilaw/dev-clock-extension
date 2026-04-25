@@ -125,6 +125,20 @@ Commands:
 
 This keeps development/test tooling out of the installed extension.
 
+### Snapshot vs release artifacts
+
+- CI on push/PR uploads snapshot artifacts named `dev-clock-extention-snapshot-<commit_sha>.zip` (short retention).
+- Tagged releases (`v*.*.*`) run a dedicated release workflow and publish `dev-clock-extention-v<package.json version>.zip` to GitHub Releases.
+- Release workflow enforces tag/package version match (for example, tag `v1.2.3` must match `package.json` version `1.2.3`).
+
+Release helpers in `package.json`:
+
+- `npm run release:patch`
+- `npm run release:minor`
+- `npm run release:major`
+
+These run tests before bumping (`preversion`) and push commit + tag automatically (`postversion`).
+
 ## Development notes
 
 - The popup uses local Luxon (`lib/luxon.min.js`) to stay MV3-compatible.
