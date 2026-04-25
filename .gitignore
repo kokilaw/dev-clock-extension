@@ -12,6 +12,7 @@ reports/
 # Build/package artifacts
 dist/
 *.zip
+/lib/parser-vendors.js
 
 # OS/editor noise
 .DS_Store
