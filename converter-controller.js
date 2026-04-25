@@ -1,11 +1,11 @@
 /**
  * DevClock — converter-controller.js
  * ─────────────────────────────────────────────────────────────────────────────
- * Converts US/UK/UTC timestamps to Australia/Melbourne time.
+ * Converts source timestamps to the configured target local timezone.
  * Stack: Luxon (timezone math + lightweight NLP parsing)
  *
  * Architecture note: All conversion logic lives in the pure functions at the
- * bottom of this file (parseTimestamp, convertToMelbourne, buildSplunkFragment).
+ * bottom of this file (parseTimestamp, convertToTargetZone, buildSplunkFragment).
  * To migrate to a Content Script Overlay, import/copy only those functions —
  * the UI wiring in init() is the only popup-specific part.
  * ─────────────────────────────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ if (!Luxon || !Luxon.DateTime) {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const TARGET_TZ    = "Australia/Melbourne";
+const DEFAULT_TARGET_TZ = "Australia/Melbourne";
 const SPLUNK_WINDOW = 1; // ± minutes for the Splunk fragment
 const PREFERENCES_STORAGE_KEY = "devClockPreferences";
 
@@ -50,6 +50,7 @@ const state = {
   prefs:        null,
   queryProvider: "splunk",
   hourFormat: "24h",
+  targetTz: DEFAULT_TARGET_TZ,
 };
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
@@ -72,6 +73,8 @@ const els = {
   splunkPreview: $("splunkPreview"),
   splunkText:    $("splunkPreviewText"),
   queryPreviewLabel: $("queryPreviewLabel"),
+  targetMeta:    $("targetMeta"),
+  resultTargetBadge: $("resultTargetBadge"),
   btnSplunk:     $("btnSplunk"),
   btnCopy:       $("btnCopy"),
   btnOpenPreferences: $("btnOpenPreferences"),
@@ -116,12 +119,21 @@ function getSourceZoneName(sourceTz) {
   return sourceTz;
 }
 
+function getTargetZoneName() {
+  return state.targetTz || DEFAULT_TARGET_TZ;
+}
+
 function getTimezoneDisplayName(timezone) {
   if (TZ_DISPLAY_NAMES[timezone]) return TZ_DISPLAY_NAMES[timezone];
   if (typeof timezone !== "string") return "Unknown";
 
   const tail = timezone.includes("/") ? timezone.split("/").pop() : timezone;
   return tail.replace(/_/g, " ");
+}
+
+function getTargetDisplayName() {
+  const target = getTargetZoneName();
+  return target.includes("/") ? target.split("/").pop().replace(/_/g, " ") : target;
 }
 
 function createTimezoneButton(timezone) {
@@ -171,11 +183,11 @@ function renderTimezoneToggles(timezones, activeTz) {
 }
 
 /**
- * Format a Luxon DateTime in Melbourne time as a tidy ISO string for Splunk.
+ * Format a Luxon DateTime in target timezone as a tidy ISO string for Splunk.
  * Splunk's _time field uses ISO 8601 with no space: 2024-06-10T14:30:00+10:00
  */
 function toSplunkISO(luxonDT) {
-  return luxonDT.setZone(TARGET_TZ).toISO({ suppressMilliseconds: true });
+  return luxonDT.setZone(getTargetZoneName()).toISO({ suppressMilliseconds: true });
 }
 
 // ── Core Logic (portable — no DOM deps) ───────────────────────────────────
@@ -342,12 +354,12 @@ function weekdayNameToNumber(weekdayName) {
 }
 
 /**
- * convertToMelbourne(millis)
+ * convertToTargetZone(millis)
  *
- * Takes UTC epoch ms, returns a Luxon DateTime in TARGET_TZ.
+ * Takes UTC epoch ms, returns a Luxon DateTime in configured target timezone.
  */
-function convertToMelbourne(millis) {
-  return Luxon.DateTime.fromMillis(millis, { zone: TARGET_TZ });
+function convertToTargetZone(millis) {
+  return Luxon.DateTime.fromMillis(millis, { zone: getTargetZoneName() });
 }
 
 /**
@@ -416,6 +428,20 @@ function applyProviderUi() {
   }
 }
 
+function applyTargetUi() {
+  const targetName = getTargetDisplayName();
+  const targetZone = getTargetZoneName();
+
+  if (els.targetMeta) {
+    els.targetMeta.textContent = `${targetName} ↔ Global`;
+  }
+
+  if (els.resultTargetBadge) {
+    els.resultTargetBadge.textContent = targetZone.toUpperCase().replace(/_/g, " ");
+    els.resultTargetBadge.title = targetZone;
+  }
+}
+
 function formatTime(dt, includeSeconds = true) {
   const isTwelveHour = state.hourFormat === "12h";
   if (includeSeconds) {
@@ -454,9 +480,9 @@ function showEmpty() {
 }
 
 function showResult(millis) {
-  const melb = convertToMelbourne(millis);
+  const targetDT = convertToTargetZone(millis);
   state.parsedMillis = millis;
-  state.melbourneISO = melb.toISO({ suppressMilliseconds: true }); // clipboard copy always suppresses ms
+  state.melbourneISO = targetDT.toISO({ suppressMilliseconds: true }); // clipboard copy always suppresses ms
 
   // Source time display
   const actualZone  = getSourceZoneName(state.sourceTz);
@@ -465,18 +491,18 @@ function showResult(millis) {
   els.resultFromTz.textContent   = getTimezoneDisplayName(state.sourceTz);
   els.resultFromTime.textContent = `${formatTime(sourceDT)} (${sourceDT.toFormat("dd LLL yyyy")})`;
 
-  // Melbourne display
-  els.resultTime.textContent = formatTime(melb);
-  els.resultDate.textContent = melb.toFormat("ccc, dd LLL yyyy");
+  // Target display
+  els.resultTime.textContent = formatTime(targetDT);
+  els.resultDate.textContent = targetDT.toFormat("ccc, dd LLL yyyy");
 
   // Extra info
   els.resultUnix.textContent = Math.floor(millis / 1000);
   els.resultISO.textContent  = millis % 1000 === 0
-    ? melb.toISO({ suppressMilliseconds: true })
-    : melb.toISO();
+    ? targetDT.toISO({ suppressMilliseconds: true })
+    : targetDT.toISO();
 
   // Splunk preview
-  const fragment = buildQueryFragment(melb);
+  const fragment = buildQueryFragment(targetDT);
   renderQueryPreview(fragment);
 
   // Show elements
@@ -541,7 +567,7 @@ async function copyToClipboard(text, btn) {
 }
 
 function updateNowBadge() {
-  const now = Luxon.DateTime.now().setZone(TARGET_TZ);
+  const now = Luxon.DateTime.now().setZone(getTargetZoneName());
   els.nowBadge.textContent = formatTime(now);
 }
 
@@ -560,17 +586,19 @@ async function loadActiveTimezonePreference() {
     state.prefs = await globalThis.DevClockPreferences.getPreferences();
     state.queryProvider = state.prefs?.queryProvider || "splunk";
     state.hourFormat = state.prefs?.hourFormat || "24h";
+    state.targetTz = state.prefs?.localTimezone || DEFAULT_TARGET_TZ;
     return state.prefs?.activeSourceTimezone || null;
   }
 
   state.prefs = {
     sourceTimezones: [...DEFAULT_SOURCE_TIMEZONES],
-    localTimezone: Luxon.DateTime.local().zoneName,
+    localTimezone: DEFAULT_TARGET_TZ,
     queryProvider: "splunk",
     hourFormat: "24h",
   };
   state.queryProvider = "splunk";
   state.hourFormat = "24h";
+  state.targetTz = state.prefs.localTimezone;
 
   return localStorage.getItem("sourceTz");
 }
@@ -590,9 +618,11 @@ async function refreshPreferencesFromStorage() {
   state.prefs = await globalThis.DevClockPreferences.getPreferences();
   state.queryProvider = state.prefs?.queryProvider || "splunk";
   state.hourFormat = state.prefs?.hourFormat || "24h";
+  state.targetTz = state.prefs?.localTimezone || DEFAULT_TARGET_TZ;
 
   renderTimezoneToggles(state.prefs?.sourceTimezones, state.prefs?.activeSourceTimezone || state.sourceTz);
   applyProviderUi();
+  applyTargetUi();
   updateTzOffsets();
   updateNowBadge();
 
@@ -628,12 +658,13 @@ async function init() {
   const savedTz = await loadActiveTimezonePreference();
   renderTimezoneToggles(state.prefs?.sourceTimezones, savedTz || state.sourceTz);
   applyProviderUi();
+  applyTargetUi();
 
   // ── Copy for Splunk ──
   els.btnSplunk.addEventListener("click", () => {
     if (!state.parsedMillis) return;
-    const melb     = convertToMelbourne(state.parsedMillis);
-    const fragment = buildQueryFragment(melb);
+    const targetDT = convertToTargetZone(state.parsedMillis);
+    const fragment = buildQueryFragment(targetDT);
     copyToClipboard(fragment, els.btnSplunk);
   });
 

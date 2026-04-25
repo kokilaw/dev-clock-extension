@@ -34,6 +34,31 @@ AfterAll(async () => {
 Before(async function () {
   this.context = await browser.newContext();
   this.page = await this.context.newPage();
+
+  await this.page.addInitScript(() => {
+    const key = 'devClockPreferences';
+    const defaults = {
+      schemaVersion: 1,
+      localTimezone: 'Australia/Melbourne',
+      sourceTimezones: ['America/New_York', 'UTC', 'Europe/London', 'LOCAL'],
+      activeSourceTimezone: 'America/New_York',
+      queryProvider: 'splunk',
+      hourFormat: '24h',
+    };
+
+    const current = (() => {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    })();
+
+    const merged = { ...defaults, ...(current || {}) };
+    localStorage.setItem(key, JSON.stringify(merged));
+  });
+
   await this.page.goto(popupUrl);
   await this.page.waitForSelector('#timeInput');
 });
