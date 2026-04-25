@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevClock Preferences</title>
+  <style>
+    :root {
+      --bg: #0d0f12;
+      --panel: #13161b;
+      --border: #2a2f3a;
+      --text: #e8eaf0;
+      --muted: #8d95a8;
+      --accent: #3d8eff;
+      --ok: #3ddc84;
+      --danger: #ff5f5f;
+      --chip: #1c2028;
+      --chipBorder: #3a4052;
+      --font: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.45;
+    }
+
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 22px;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0;
+      font-size: 13px;
+    }
+
+    h2 {
+      font-size: 15px;
+      margin: 0 0 10px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing: .02em;
+    }
+
+    select, input, button {
+      font: inherit;
+    }
+
+    select, input[type="text"] {
+      width: 100%;
+      background: #1b2029;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--chip);
+      border: 1px solid var(--chipBorder);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .chip button {
+      border: none;
+      background: transparent;
+      color: #ff8f8f;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 0;
+    }
+
+    .chip.locked button { display: none; }
+
+    .btn {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #1b2029;
+      color: var(--text);
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: rgba(61, 142, 255, .15);
+      border-color: var(--accent);
+      color: #9fc4ff;
+    }
+
+    .btn.danger {
+      border-color: #6e2c2c;
+      color: #ff9a9a;
+    }
+
+    .inline {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status {
+      font-size: 12px;
+      margin-top: 8px;
+      min-height: 18px;
+    }
+
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--danger); }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>DevClock Preferences</h1>
+      <p class="sub">Settings are persisted and restored across browser restarts.</p>
+    </div>
+
+    <div class="card">
+      <h2>Local timezone</h2>
+      <label for="localTimezone">IANA timezone</label>
+      <select id="localTimezone"></select>
+      <div class="hint">Used when source timezone is set to <strong>Local</strong>.</div>
+    </div>
+
+    <div class="card">
+      <h2>Source timezones for popup toggles</h2>
+      <div class="row">
+        <div>
+          <label for="timezoneToAdd">Add timezone</label>
+          <select id="timezoneToAdd"></select>
+        </div>
+        <button id="btnAddTimezone" class="btn" type="button">Add</button>
+      </div>
+      <div id="sourceTimezoneChips" class="chips"></div>
+      <div class="hint">UTC and LOCAL are always kept and cannot be removed.</div>
+    </div>
+
+    <div class="card">
+      <h2>Copy query provider</h2>
+      <label for="queryProvider">Provider</label>
+      <select id="queryProvider">
+        <option value="splunk">Splunk</option>
+        <option value="grafana">Grafana</option>
+        <option value="cloudwatch">CloudWatch</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h2>Time display format</h2>
+      <div class="inline">
+        <label><input type="radio" name="hourFormat" value="24h" /> 24-hour</label>
+        <label><input type="radio" name="hourFormat" value="12h" /> 12-hour</label>
+      </div>
+    </div>
+
+    <div class="card footer">
+      <div>
+        <button id="btnSave" class="btn primary" type="button">Save preferences</button>
+        <button id="btnReset" class="btn danger" type="button">Reset defaults</button>
+      </div>
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+
+  <script src="preferences.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

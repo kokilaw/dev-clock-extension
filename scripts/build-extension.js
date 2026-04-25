@@ -7,6 +7,9 @@ const distDir = path.join(projectRoot, 'dist');
 const requiredFiles = [
   'manifest.json',
   'converter-popup.html',
+  'options.html',
+  'options.js',
+  'preferences.js',
   'converter-controller.js',
   path.join('lib', 'luxon.min.js'),
   path.join('icons', 'icon16.png'),

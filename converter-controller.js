@@ -394,9 +394,37 @@ function updateNowBadge() {
   els.nowBadge.textContent = now.toFormat("HH:mm:ss");
 }
 
+function applyActiveTimezone(timezone) {
+  if (!timezone) return;
+  const targetBtn = document.querySelector(`.tz-btn[data-tz="${timezone}"]`);
+  if (!targetBtn) return;
+
+  document.querySelectorAll(".tz-btn").forEach(b => b.classList.remove("active"));
+  targetBtn.classList.add("active");
+  state.sourceTz = timezone;
+}
+
+async function loadActiveTimezonePreference() {
+  if (globalThis.DevClockPreferences?.getPreferences) {
+    const prefs = await globalThis.DevClockPreferences.getPreferences();
+    return prefs?.activeSourceTimezone || null;
+  }
+
+  return localStorage.getItem("sourceTz");
+}
+
+async function saveActiveTimezonePreference(timezone) {
+  if (globalThis.DevClockPreferences?.savePreferences) {
+    await globalThis.DevClockPreferences.savePreferences({ activeSourceTimezone: timezone });
+    return;
+  }
+
+  localStorage.setItem("sourceTz", timezone);
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 
-function init() {
+async function init() {
   // ── Live parsing on input ──
   els.input.addEventListener("input", () => {
     els.clearBtn.classList.toggle("visible", els.input.value.length > 0);
@@ -418,21 +446,14 @@ function init() {
   });
 
   // ── Restore saved timezone ──
-  const savedTz = localStorage.getItem("sourceTz");
-  if (savedTz) {
-    state.sourceTz = savedTz;
-    document.querySelectorAll(".tz-btn").forEach(b => b.classList.remove("active"));
-    const savedBtn = document.querySelector(`.tz-btn[data-tz="${savedTz}"]`);
-    if (savedBtn) savedBtn.classList.add("active");
-  }
+  const savedTz = await loadActiveTimezonePreference();
+  applyActiveTimezone(savedTz);
 
   // ── Timezone toggles ──
   document.querySelectorAll(".tz-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tz-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      state.sourceTz = btn.dataset.tz;
-      localStorage.setItem("sourceTz", btn.dataset.tz);
+    btn.addEventListener("click", async () => {
+      applyActiveTimezone(btn.dataset.tz);
+      await saveActiveTimezonePreference(btn.dataset.tz);
       // Re-run conversion with same input but new source tz
       runConversion();
     });
@@ -470,4 +491,8 @@ function init() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", () => {
+  init().catch(err => {
+    console.error("Popup init failed:", err);
+  });
+});
