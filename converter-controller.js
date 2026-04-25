@@ -47,6 +47,7 @@ const state = {
   parsedMillis: null,          // UTC epoch ms of the parsed moment
   melbourneISO: null,          // ISO string in Melbourne time
   prefs:        null,
+  queryProvider: "splunk",
 };
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
@@ -68,6 +69,7 @@ const els = {
   errorMsg:      $("errorMsg"),
   splunkPreview: $("splunkPreview"),
   splunkText:    $("splunkPreviewText"),
+  queryPreviewLabel: $("queryPreviewLabel"),
   btnSplunk:     $("btnSplunk"),
   btnCopy:       $("btnCopy"),
   btnOpenPreferences: $("btnOpenPreferences"),
@@ -359,6 +361,59 @@ function buildSplunkFragment(melbourneDT, windowMinutes = SPLUNK_WINDOW) {
   return `_time >= "${fmt(from)}" AND _time <= "${fmt(to)}"`;
 }
 
+function buildGrafanaFragment(melbourneDT, windowMinutes = SPLUNK_WINDOW) {
+  const from = melbourneDT.minus({ minutes: windowMinutes }).toUTC().toMillis();
+  const to = melbourneDT.plus({ minutes: windowMinutes }).toUTC().toMillis();
+  return `from=${from}&to=${to}`;
+}
+
+function buildCloudWatchFragment(melbourneDT, windowMinutes = SPLUNK_WINDOW) {
+  const from = melbourneDT.minus({ minutes: windowMinutes }).toUTC().set({ millisecond: 0 }).toISO({ suppressMilliseconds: true });
+  const to = melbourneDT.plus({ minutes: windowMinutes }).toUTC().set({ millisecond: 0 }).toISO({ suppressMilliseconds: true });
+  return `filter @timestamp >= '${from}' and @timestamp <= '${to}'`;
+}
+
+const QUERY_PROVIDERS = {
+  splunk: {
+    name: "Splunk",
+    build: buildSplunkFragment,
+    highlight: syntaxHighlightSplunk,
+  },
+  grafana: {
+    name: "Grafana",
+    build: buildGrafanaFragment,
+  },
+  cloudwatch: {
+    name: "CloudWatch",
+    build: buildCloudWatchFragment,
+  },
+};
+
+function getActiveProvider() {
+  return QUERY_PROVIDERS[state.queryProvider] || QUERY_PROVIDERS.splunk;
+}
+
+function buildQueryFragment(melbourneDT) {
+  return getActiveProvider().build(melbourneDT);
+}
+
+function renderQueryPreview(fragment) {
+  const provider = getActiveProvider();
+  if (provider.highlight) {
+    els.splunkText.innerHTML = provider.highlight(fragment);
+    return;
+  }
+
+  els.splunkText.textContent = fragment;
+}
+
+function applyProviderUi() {
+  const provider = getActiveProvider();
+  if (els.queryPreviewLabel) {
+    els.queryPreviewLabel.textContent = `Query Preview · ${provider.name}`;
+  }
+}
+
 // ── Rendering ──────────────────────────────────────────────────────────────
 
 function showError(msg) {
@@ -410,8 +465,8 @@ function showResult(millis) {
     : melb.toISO();
 
   // Splunk preview
-  const fragment = buildSplunkFragment(melb);
-  els.splunkText.innerHTML = syntaxHighlightSplunk(fragment);
+  const fragment = buildQueryFragment(melb);
+  renderQueryPreview(fragment);
 
   // Show elements
   els.resultEmpty.style.display = "none";
@@ -492,13 +547,16 @@ function applyActiveTimezone(timezone) {
 async function loadActiveTimezonePreference() {
   if (globalThis.DevClockPreferences?.getPreferences) {
     state.prefs = await globalThis.DevClockPreferences.getPreferences();
+    state.queryProvider = state.prefs?.queryProvider || "splunk";
     return state.prefs?.activeSourceTimezone || null;
   }
 
   state.prefs = {
     sourceTimezones: [...DEFAULT_SOURCE_TIMEZONES],
     localTimezone: Luxon.DateTime.local().zoneName,
+    queryProvider: "splunk",
   };
+  state.queryProvider = "splunk";
 
   return localStorage.getItem("sourceTz");
 }
@@ -538,12 +596,13 @@ async function init() {
   // ── Restore saved timezone ──
   const savedTz = await loadActiveTimezonePreference();
   renderTimezoneToggles(state.prefs?.sourceTimezones, savedTz || state.sourceTz);
+  applyProviderUi();
 
   // ── Copy for Splunk ──
   els.btnSplunk.addEventListener("click", () => {
     if (!state.parsedMillis) return;
     const melb     = convertToMelbourne(state.parsedMillis);
-    const fragment = buildSplunkFragment(melb);
+    const fragment = buildQueryFragment(melb);
     copyToClipboard(fragment, els.btnSplunk);
   });
 
