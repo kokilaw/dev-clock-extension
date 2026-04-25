@@ -270,9 +270,9 @@
     .result-card {
       display: none;
       background: var(--bg-raised);
-      border: 1px solid var(--border);
+      border: 1px solid rgba(42, 47, 58, 0.75);
       border-radius: 6px;
-      padding: 10px 12px;
+      padding: 10px 12px 9px;
       animation: slideIn 0.15s ease;
     }
 
@@ -287,42 +287,44 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+      opacity: 1;
     }
 
     .result-from-tz {
       font-size: 9px;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      background: rgba(245, 166, 35, 0.15);
-      color: var(--accent-amber);
-      border: 1px solid rgba(245, 166, 35, 0.25);
+      background: rgba(61, 142, 255, 0.12);
+      color: var(--accent-blue);
+      border: 1px solid rgba(61, 142, 255, 0.32);
       border-radius: 3px;
       padding: 1px 5px;
     }
 
     .result-from-time {
       font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-secondary);
+      font-size: 10px;
+      color: #7f89a0;
     }
 
     .result-arrow {
       font-size: 10px;
       color: var(--text-muted);
-      margin: 0 2px;
+      margin: 0 4px 0 2px;
     }
 
     .result-main {
       display: flex;
       align-items: baseline;
-      gap: 8px;
+      gap: 10px;
+      margin-bottom: 7px;
     }
 
     .result-time {
       font-family: var(--font-mono);
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 700;
       color: var(--accent-cyan);
       letter-spacing: -0.01em;
@@ -331,8 +333,8 @@
 
     .result-date {
       font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-secondary);
+      font-size: 10px;
+      color: #7f89a0;
     }
 
     .result-tz-badge {
@@ -340,25 +342,39 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      background: rgba(0, 212, 200, 0.1);
+      background: rgba(0, 212, 200, 0.14);
       color: var(--accent-cyan);
-      border: 1px solid rgba(0, 212, 200, 0.2);
+      border: 1px solid rgba(0, 212, 200, 0.35);
       border-radius: 3px;
-      padding: 2px 5px;
+      padding: 2px 6px;
       margin-left: auto;
     }
 
     .result-unix {
       font-family: var(--font-mono);
-      font-size: 10px;
+      font-size: 9px;
       color: var(--text-muted);
-      margin-top: 5px;
-      display: flex;
-      gap: 14px;
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      column-gap: 8px;
+      row-gap: 3px;
+      align-items: baseline;
+      border-top: 1px solid rgba(42, 47, 58, 0.55);
+      padding-top: 6px;
+    }
+
+    .result-unix .meta-label {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #5d6780;
     }
 
     .result-unix span {
       color: var(--text-secondary);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     /* ── Error State ────────────────────────────────────── */
@@ -598,8 +614,8 @@
         <span class="result-date" id="resultDate">—</span>
       </div>
       <div class="result-unix">
-        unix: <span id="resultUnix">—</span>
-        &nbsp;·&nbsp; iso: <span id="resultISO">—</span>
+        <span class="meta-label">unix</span><span id="resultUnix">—</span>
+        <span class="meta-label">iso</span><span id="resultISO">—</span>
       </div>
     </div>
     <div class="error-msg" id="errorMsg">⚠ Could not parse timestamp — try a different format</div>
