@@ -165,7 +165,7 @@ Then('the offset difference should reflect +15 hours', async function () {
   const [, sourceHms, sourceDate] = match;
   const zone = TZ_IANA[this.selectedTimezone || 'US/Eastern'];
   const sourceDT = DateTime.fromFormat(`${sourceHms} ${sourceDate}`, 'HH:mm:ss dd LLL yyyy', { zone });
-  const melbDT = DateTime.fromISO(melbIso);
+  const melbDT = DateTime.fromISO(melbIso, { setZone: true });
 
   // Compare UTC offsets (wall-clock difference), not the UTC instant (which would be 0)
   const offsetDiffHours = (melbDT.offset - sourceDT.offset) / 60;

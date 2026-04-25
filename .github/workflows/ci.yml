@@ -89,5 +89,5 @@ jobs:
         with:
           name: extension-package
           retention-days: 7
-          path: dev-clock-extention.zip
+          path: dev-clock-extention-v*.zip
           if-no-files-found: ignore
