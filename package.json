@@ -4,7 +4,8 @@
   "version": "1.1.0",
   "scripts": {
     "sync:luxon": "node scripts/sync-luxon.js",
-    "prebuild:extension": "npm run sync:luxon",
+    "sync:parser-vendors": "node scripts/build-parser-vendors.js",
+    "prebuild:extension": "npm run sync:luxon && npm run sync:parser-vendors",
     "build:extension": "node scripts/build-extension.js",
     "package:extension": "npm run build:extension && VERSION=$(node -p 'require(\"./package.json\").version') && cd dist && rm -f ../dev-clock-extention-v*.zip && zip -r ../dev-clock-extention-v$VERSION.zip .",
     "preversion": "npm run test:integration",
@@ -19,6 +20,12 @@
   "devDependencies": {
     "@cucumber/cucumber": "^11.3.0",
     "@playwright/test": "^1.53.0",
+    "esbuild": "^0.28.0",
     "luxon": "^3.7.2"
+  },
+  "dependencies": {
+    "any-date-parser": "^2.2.3",
+    "chrono-node": "^2.9.0",
+    "timezone-abbreviations": "^1.2.6"
   }
 }

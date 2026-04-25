@@ -1,12 +1,47 @@
 "use strict";
 
 (function bootstrapTimestampParser(global) {
-  const LuxonRef = global.Luxon || global.luxon || (typeof require === "function" ? require("luxon") : null);
+  function tryRequire(moduleName) {
+    if (typeof require !== "function") return null;
+
+    try {
+      return require(moduleName);
+    } catch {
+      return null;
+    }
+  }
+
+  const LuxonRef = global.Luxon || global.luxon || tryRequire("luxon");
   const DateTime = LuxonRef?.DateTime;
+  const FixedOffsetZone = LuxonRef?.FixedOffsetZone;
+  const chronoModule = global.chrono || tryRequire("chrono-node");
+  const anyDateParserModule = global.anyDateParser || tryRequire("any-date-parser");
+  const timezoneAbbreviationModule = global.timezoneAbbreviations || tryRequire("timezone-abbreviations");
 
   if (!DateTime) {
     throw new Error("Luxon.DateTime is required for timestamp parsing.");
   }
+
+  function normalizeAnyDateParser(moduleValue) {
+    if (!moduleValue) return null;
+
+    if (moduleValue.default && typeof moduleValue.fromString !== "function") {
+      return moduleValue.default;
+    }
+
+    return moduleValue;
+  }
+
+  function normalizeTimezoneAbbreviationSource(moduleValue) {
+    if (!moduleValue) return null;
+
+    if (Array.isArray(moduleValue?.default)) return moduleValue.default;
+    if (Array.isArray(moduleValue)) return moduleValue;
+    return moduleValue;
+  }
+
+  const anyDateParserRef = normalizeAnyDateParser(anyDateParserModule);
+  const timezoneAbbreviationSource = normalizeTimezoneAbbreviationSource(timezoneAbbreviationModule);
 
   function getEffectiveSourceZone(sourceTz, options = {}) {
     if (sourceTz === "LOCAL") {
@@ -42,6 +77,31 @@
 
   function isUsableZone(zoneName) {
     return typeof zoneName === "string" && DateTime.now().setZone(zoneName).isValid;
+  }
+
+  function parseUtcOffsetString(offsetValue) {
+    if (typeof offsetValue !== "string") return null;
+
+    const match = offsetValue.trim().match(/^UTC([+-])(\d{2})(?::?(\d{2}))?$/i);
+    if (!match) return null;
+
+    const [, signToken, hoursToken, minutesToken = "00"] = match;
+    const sign = signToken === "+" ? 1 : -1;
+    return sign * (parseInt(hoursToken, 10) * 60 + parseInt(minutesToken, 10));
+  }
+
+  function offsetMinutesToZone(offsetMinutes) {
+    if (!Number.isFinite(offsetMinutes)) return null;
+
+    if (FixedOffsetZone?.instance) {
+      return FixedOffsetZone.instance(offsetMinutes);
+    }
+
+    const sign = offsetMinutes >= 0 ? "+" : "-";
+    const absoluteMinutes = Math.abs(offsetMinutes);
+    const hours = String(Math.floor(absoluteMinutes / 60)).padStart(2, "0");
+    const minutes = String(absoluteMinutes % 60).padStart(2, "0");
+    return `UTC${sign}${hours}:${minutes}`;
   }
 
   function extractZoneFromCandidate(candidate) {
@@ -82,10 +142,45 @@
   }
 
   function resolveTimezoneAbbreviation(abbreviation) {
-    if (!abbreviation || !global.timezoneAbbreviations) return null;
+    if (!abbreviation) return null;
 
-    const lib = global.timezoneAbbreviations;
+    const builtinZones = {
+      UTC: "UTC",
+      GMT: "UTC",
+      Z: "UTC",
+    };
     const upper = abbreviation.toUpperCase();
+    if (builtinZones[upper]) return builtinZones[upper];
+
+    if (Array.isArray(timezoneAbbreviationSource)) {
+      const matches = timezoneAbbreviationSource.filter(entry => entry?.abbr?.toUpperCase() === upper);
+
+      for (const match of matches) {
+        const zoneName = extractZoneFromCandidate([
+          match.names,
+          match.zone,
+          match.timezone,
+          match.name,
+        ]);
+        if (zoneName) return zoneName;
+      }
+
+      const uniqueOffsets = [...new Set(
+        matches
+          .map(match => parseUtcOffsetString(match.offset))
+          .filter(offset => Number.isFinite(offset))
+      )];
+
+      if (uniqueOffsets.length === 1) {
+        return offsetMinutesToZone(uniqueOffsets[0]);
+      }
+
+      return null;
+    }
+
+    if (!timezoneAbbreviationSource) return null;
+
+    const lib = timezoneAbbreviationSource;
     const lower = abbreviation.toLowerCase();
     const attempts = [];
 
@@ -128,79 +223,118 @@
     return /^\d{1,2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:\s*[ap]m)?$/i.test(input.trim());
   }
 
-  function coerceAnyDateParserResult(result, zoneName, input, nowRef) {
-    if (!result) return null;
+  function isDirectTimeInput(input) {
+    const trimmed = input.trim();
+    return /^\d{4}$/.test(trimmed) || /^\d{1,2}(?::\d{2})?(?::\d{2}(?:\.\d{1,9})?)?(?:\s*[ap]m)?$/i.test(trimmed);
+  }
 
-    let dt = null;
+  function hasExplicitAbsoluteZone(input) {
+    return /(?:[zZ]|[+-]\d{2}:?\d{2}|\b(?:utc|gmt)\b)/.test(input);
+  }
 
-    if (result instanceof Date) {
-      dt = DateTime.fromJSDate(result, { zone: zoneName });
-    } else if (typeof result === "number") {
-      dt = DateTime.fromMillis(result, { zone: zoneName });
-    } else if (typeof result === "string") {
-      const parsedMillis = Date.parse(result);
-      if (!Number.isNaN(parsedMillis)) {
-        dt = DateTime.fromMillis(parsedMillis, { zone: zoneName });
-      }
-    } else if (typeof result === "object") {
-      if (result.date instanceof Date) {
-        dt = DateTime.fromJSDate(result.date, { zone: zoneName });
-      } else if (typeof result.toDate === "function") {
-        const asDate = result.toDate();
-        if (asDate instanceof Date) dt = DateTime.fromJSDate(asDate, { zone: zoneName });
-      } else if (typeof result.toJSDate === "function") {
-        const asDate = result.toJSDate();
-        if (asDate instanceof Date) dt = DateTime.fromJSDate(asDate, { zone: zoneName });
-      } else if ([result.year, result.month, result.day].some(part => part != null)) {
-        const monthValue = typeof result.month === "number" && result.month >= 0 && result.month <= 11
-          ? result.month + 1
-          : result.month;
-        dt = DateTime.fromObject({
-          year: result.year,
-          month: monthValue,
-          day: result.day,
-          hour: result.hour || 0,
-          minute: result.minute || 0,
-          second: result.second || 0,
-          millisecond: result.millisecond || result.ms || 0,
-        }, { zone: zoneName });
-      } else if ([result.hour, result.minute, result.second, result.millisecond, result.ms].some(part => part != null)) {
-        const base = nowRef.setZone(zoneName).startOf("day");
-        dt = base.set({
-          hour: result.hour || 0,
-          minute: result.minute || 0,
-          second: result.second || 0,
-          millisecond: result.millisecond || result.ms || 0,
-        });
-      }
-    }
+  function parseTimeOnlyInput(input, zoneName, nowRef) {
+    const parsedTime = parseTimeOfDay(input);
+    if (!parsedTime) return null;
 
-    if (!dt || !dt.isValid) return null;
+    const base = nowRef.setZone(zoneName).startOf("day");
+    return applyParsedTime(base, parsedTime, zoneName);
+  }
 
-    if (isTimeOnlyInput(input)) {
-      const base = nowRef.setZone(zoneName).startOf("day");
-      dt = base.set({
-        hour: dt.hour,
-        minute: dt.minute,
-        second: dt.second,
-        millisecond: dt.millisecond,
-      });
-    }
+  function parseApacheLogTimestamp(input) {
+    const match = input.match(/^(\d{1,2})\/([A-Za-z]{3})\/(\d{4}):(\d{2}):(\d{2}):(\d{2})\s+([+-]\d{4})$/);
+    if (!match) return null;
+
+    const [, dayToken, monthToken, yearToken, hourToken, minuteToken, secondToken, offsetToken] = match;
+    const months = {
+      jan: 1,
+      feb: 2,
+      mar: 3,
+      apr: 4,
+      may: 5,
+      jun: 6,
+      jul: 7,
+      aug: 8,
+      sep: 9,
+      oct: 10,
+      nov: 11,
+      dec: 12,
+    };
+
+    const month = months[monthToken.toLowerCase()];
+    if (!month) return null;
+
+    const isoDate = `${yearToken}-${String(month).padStart(2, "0")}-${String(parseInt(dayToken, 10)).padStart(2, "0")}`;
+    const dt = DateTime.fromFormat(`${isoDate} ${hourToken}:${minuteToken}:${secondToken} ${offsetToken}`, "yyyy-MM-dd HH:mm:ss ZZZ", {
+      setZone: true,
+    });
 
     return dt.isValid ? dt : null;
   }
 
-  function parseWithAnyDateParser(input, zoneName, nowRef) {
-    if (!global.anyDateParser) return null;
+  function coerceAnyDateParserResult(result, zoneName, input, nowRef) {
+    if (!result) return null;
 
-    const lib = global.anyDateParser;
+    if (result instanceof Date) {
+      if (Number.isNaN(result.getTime())) return null;
+      const dt = DateTime.fromJSDate(result);
+      return dt.isValid ? dt : null;
+    }
+
+    if (typeof result === "number") {
+      const dt = DateTime.fromMillis(result);
+      return dt.isValid ? dt : null;
+    }
+
+    if (typeof result === "string") {
+      const parsedMillis = Date.parse(result);
+      if (!Number.isNaN(parsedMillis)) {
+        const dt = DateTime.fromMillis(parsedMillis);
+        return dt.isValid ? dt : null;
+      }
+
+      return null;
+    }
+
+    if (typeof result !== "object") return null;
+
+    const reference = nowRef.setZone(zoneName);
+    const hasDateParts = [result.year, result.month, result.day].some(part => part != null);
+    const hasTimeParts = [result.hour, result.minute, result.second, result.millisecond, result.ms].some(part => part != null);
+
+    if (!hasDateParts && !hasTimeParts) return null;
+
+    const zoneForResult = result.offset != null ? offsetMinutesToZone(result.offset) || zoneName : zoneName;
+    const dt = DateTime.fromObject({
+      year: result.year ?? reference.year,
+      month: result.month ?? reference.month,
+      day: result.day ?? reference.day,
+      hour: result.hour ?? 0,
+      minute: result.minute ?? 0,
+      second: result.second ?? 0,
+      millisecond: result.millisecond ?? result.ms ?? 0,
+    }, { zone: zoneForResult });
+
+    if (!dt.isValid) return null;
+
+    if (!hasDateParts && !hasExplicitAbsoluteZone(input) && result.offset == null) {
+      return dt.setZone(zoneName, { keepLocalTime: true });
+    }
+
+    return dt;
+  }
+
+  function parseWithAnyDateParser(input, zoneName, nowRef) {
+    if (!anyDateParserRef) return null;
+
     const attempts = [];
 
-    if (typeof lib === "function") attempts.push(() => lib(input));
+    if (typeof anyDateParserRef.attempt === "function") {
+      attempts.push(() => anyDateParserRef.attempt(input));
+    }
 
-    for (const methodName of ["fromString", "parse", "parseDate", "attempt", "tryParse"]) {
-      if (typeof lib[methodName] === "function") {
-        attempts.push(() => lib[methodName](input));
+    for (const methodName of ["fromString", "parse", "parseDate", "fromAny", "tryParse"]) {
+      if (typeof anyDateParserRef[methodName] === "function") {
+        attempts.push(() => anyDateParserRef[methodName](input));
       }
     }
 
@@ -214,6 +348,34 @@
     }
 
     return null;
+  }
+
+  function parseWithChrono(input, zoneName, nowRef) {
+    if (typeof chronoModule?.parse !== "function") return null;
+
+    try {
+      const parsedResults = chronoModule.parse(input, nowRef.setZone(zoneName).toJSDate());
+      const start = parsedResults?.[0]?.start;
+      if (!start) return null;
+
+      const values = { ...start.impliedValues, ...start.knownValues };
+      if (!Object.keys(values).length) return null;
+
+      const reference = nowRef.setZone(zoneName);
+      const dt = DateTime.fromObject({
+        year: values.year ?? reference.year,
+        month: values.month ?? reference.month,
+        day: values.day ?? reference.day,
+        hour: values.hour ?? 0,
+        minute: values.minute ?? 0,
+        second: values.second ?? 0,
+        millisecond: values.millisecond ?? 0,
+      }, { zone: zoneName });
+
+      return dt.isValid ? dt : null;
+    } catch {
+      return null;
+    }
   }
 
   function parseTimestamp(raw, sourceTz, options = {}) {
@@ -242,7 +404,7 @@
     }
 
     // 2.5 — Trailing timezone abbreviation extraction (local to this call only)
-    const trailingTzMatch = str.match(/^(.*?)(?:\s+|,\s*)([A-Za-z]{2,5})$/);
+    const trailingTzMatch = str.match(/^(.*?)(?:\s+|,\s*)([A-Za-z]{1,5})$/);
     if (trailingTzMatch) {
       const [, body, abbreviation] = trailingTzMatch;
       if (!/^(am|pm)$/i.test(abbreviation)) {
@@ -254,18 +416,10 @@
       }
     }
 
-    // 2.75 — 4-digit military time (e.g. "1545") — route directly to natural parser
-    //        to avoid Luxon interpreting it as year 1545 via fromISO
-    if (/^\d{4}$/.test(str)) {
-      const nowEarly = nowRef.setZone(actualZone);
-      const militaryDT = parseNaturalTimestamp(str, nowEarly, actualZone);
-      if (militaryDT) return { millis: militaryDT.toMillis() };
-      return { error: `Unable to parse date: "${str}"` };
+    if (isDirectTimeInput(str)) {
+      const timeOnly = parseTimeOnlyInput(str, actualZone, nowRef);
+      if (timeOnly) return { millis: timeOnly.toMillis() };
     }
-
-    // 2.9 — Log-native / loose formats via anyDateParser
-    const anyDateParsed = parseWithAnyDateParser(str, actualZone, nowRef);
-    if (anyDateParsed) return { millis: anyDateParsed.toMillis() };
 
     // 3 — ISO 8601 (with or without timezone info)
     const isoAttempt = DateTime.fromISO(str);
@@ -277,22 +431,18 @@
       if (reanchored.isValid) return { millis: reanchored.toMillis() };
     }
 
-    // 3.5 — chrono-node natural language (if available)
-    if (global.chrono?.parseDate) {
-      try {
-        const chronoDate = global.chrono.parseDate(str, nowRef.setZone(actualZone).toJSDate());
-        if (chronoDate instanceof Date && !Number.isNaN(chronoDate.getTime())) {
-          return { millis: chronoDate.getTime() };
-        }
-      } catch {
-        // Ignore chrono parse failures and continue.
-      }
-    }
-
-    // 4 — Lightweight natural language parser
     const nowInSource = nowRef.setZone(actualZone);
     const natural = parseNaturalTimestamp(str, nowInSource, actualZone);
     if (natural) return { millis: natural.toMillis() };
+
+    const apacheParsed = parseApacheLogTimestamp(str);
+    if (apacheParsed) return { millis: apacheParsed.toMillis() };
+
+    const anyDateParsed = parseWithAnyDateParser(str, actualZone, nowRef);
+    if (anyDateParsed) return { millis: anyDateParsed.toMillis() };
+
+    const chronoParsed = parseWithChrono(str, actualZone, nowRef);
+    if (chronoParsed) return { millis: chronoParsed.toMillis() };
 
     return { error: `Unable to parse date: "${str}"` };
   }
@@ -342,7 +492,7 @@
   }
 
   function applyParsedTime(baseDate, parsedTime, zone) {
-    const time = parsedTime || { hour: 0, minute: 0, second: 0 };
+    const time = parsedTime || { hour: 0, minute: 0, second: 0, millisecond: 0 };
     const withTime = DateTime.fromObject(
       {
         year: baseDate.year,
@@ -351,6 +501,7 @@
         hour: time.hour,
         minute: time.minute,
         second: time.second,
+        millisecond: time.millisecond || 0,
       },
       { zone }
     );
@@ -368,13 +519,14 @@
       if (hour <= 23 && minute <= 59) return { hour, minute, second: 0 };
     }
 
-    const match = raw.trim().toLowerCase().match(/^(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*([ap]m)?$/i);
+    const match = raw.trim().toLowerCase().match(/^(\d{1,2})(?::(\d{2}))?(?::(\d{2})(?:\.(\d{1,9}))?)?\s*([ap]m)?$/i);
     if (!match) return null;
 
-    let [, hours, minutes = "0", seconds = "0", meridiem] = match;
+    let [, hours, minutes = "0", seconds = "0", fractional = "0", meridiem] = match;
     let hour = parseInt(hours, 10);
     const minute = parseInt(minutes, 10);
     const second = parseInt(seconds, 10);
+    const millisecond = parseInt((fractional || "0").slice(0, 3).padEnd(3, "0"), 10);
 
     if (minute > 59 || second > 59) return null;
 
@@ -386,7 +538,7 @@
       return null;
     }
 
-    return { hour, minute, second };
+    return { hour, minute, second, millisecond };
   }
 
   function weekdayNameToNumber(weekdayName) {

@@ -13,6 +13,7 @@ const requiredFiles = [
   path.join('src', 'shared', 'timestamp-parser.js'),
   path.join('src', 'popup', 'converter-controller.js'),
   path.join('lib', 'luxon.min.js'),
+  path.join('lib', 'parser-vendors.js'),
   path.join('icons', 'icon16.png'),
   path.join('icons', 'icon48.png'),
   path.join('icons', 'icon128.png'),
