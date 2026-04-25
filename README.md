@@ -125,19 +125,6 @@ Commands:
 
 This keeps development/test tooling out of the installed extension.
 
-### Extension icon generation
-
-Extension PNG icons are generated from the SVG template in [scripts/generate-icons.js](scripts/generate-icons.js):
-
-- Source script: [scripts/generate-icons.js](scripts/generate-icons.js)
-- Output files: [icons/icon16.png](icons/icon16.png), [icons/icon48.png](icons/icon48.png), [icons/icon128.png](icons/icon128.png)
-
-Regenerate icons:
-
-- `npm run icons:generate`
-
-Note: extension icons are generated independently from the popup header markup in [popup.html](popup.html).
-
 ## Development notes
 
 - The popup uses local Luxon (`lib/luxon.min.js`) to stay MV3-compatible.
@@ -192,8 +179,7 @@ log-time-sync/
 ├── icons/
 ├── scripts/
 │   ├── build-extension.js
-│   ├── sync-luxon.js
-│   └── generate-icons.js
+│   └── sync-luxon.js
 ├── tests/
 │   └── bdd/
 │       ├── features/
