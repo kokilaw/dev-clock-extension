@@ -5,28 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DevClock Preferences</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
     :root {
-      --bg: #0d0f12;
-      --panel: #13161b;
+      --bg-base: #0d0f12;
+      --bg-surface: #13161b;
+      --bg-raised: #1c2028;
+      --bg-hover: #232830;
       --border: #2a2f3a;
-      --text: #e8eaf0;
-      --muted: #8d95a8;
-      --accent: #3d8eff;
-      --ok: #3ddc84;
-      --danger: #ff5f5f;
-      --chip: #1c2028;
-      --chipBorder: #3a4052;
-      --font: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --border-focus: #3d8eff;
+
+      --text-primary: #e8eaf0;
+      --text-secondary: #7a8499;
+      --text-muted: #4a5166;
+
+      --accent-blue: #3d8eff;
+      --accent-cyan: #00d4c8;
+      --accent-green: #3ddc84;
+      --accent-red: #ff5f5f;
+
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
     }
 
-    * { box-sizing: border-box; }
-    body {
+    *, *::before, *::after {
+      box-sizing: border-box;
       margin: 0;
-      padding: 20px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
+      padding: 0;
+    }
+
+    body {
+      padding: 18px;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-ui);
+      font-size: 13px;
       line-height: 1.45;
     }
 
@@ -34,58 +47,161 @@
       max-width: 920px;
       margin: 0 auto;
       display: grid;
-      gap: 16px;
+      gap: 12px;
     }
 
     .card {
-      background: var(--panel);
+      background: var(--bg-surface);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px;
+      border-radius: 8px;
+      padding: 12px;
     }
 
     h1 {
-      margin: 0 0 4px;
-      font-size: 22px;
+      font-family: var(--font-mono);
+      font-size: 16px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
 
     .sub {
-      color: var(--muted);
-      margin: 0;
-      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-size: 11px;
+      letter-spacing: 0.02em;
     }
 
     h2 {
-      font-size: 15px;
-      margin: 0 0 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
     }
 
     label {
       display: block;
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
       margin-bottom: 6px;
-      letter-spacing: .02em;
     }
 
-    select, input, button {
+    input, button {
       font: inherit;
     }
 
-    select, input[type="text"] {
+    input[type="text"] {
       width: 100%;
-      background: #1b2029;
-      color: var(--text);
+      background: var(--bg-raised);
+      color: var(--text-primary);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 6px;
       padding: 8px 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      caret-color: var(--accent-cyan);
+    }
+
+    input[type="text"]::placeholder {
+      color: var(--text-muted);
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(61, 142, 255, 0.15);
+    }
+
+    .combo {
+      position: relative;
+    }
+
+    .combo input {
+      padding-right: 34px;
+    }
+
+    .combo-toggle {
+      position: absolute;
+      right: 7px;
+      top: 7px;
+      width: 22px;
+      height: 22px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--bg-raised);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1;
+      transition: all 0.12s;
+    }
+
+    .combo-toggle:hover {
+      border-color: #3a4052;
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    .combo-list {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      z-index: 20;
+      list-style: none;
+      max-height: 180px;
+      overflow-y: auto;
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .combo.open .combo-list {
+      display: block;
+    }
+
+    .combo-item {
+      padding: 7px 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 1px solid rgba(42, 47, 58, 0.45);
+    }
+
+    .combo-item:last-child {
+      border-bottom: none;
+    }
+
+    .combo-item:hover,
+    .combo-item.active {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .combo-item.empty {
+      color: var(--text-muted);
+      cursor: default;
+    }
+
+    .combo-item.empty:hover {
+      background: transparent;
     }
 
     .row {
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 8px;
-      align-items: end;
+      align-items: start;
     }
 
     .chips {
@@ -99,12 +215,13 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: var(--chip);
-      border: 1px solid var(--chipBorder);
+      background: var(--bg-raised);
+      border: 1px solid #3a4052;
       border-radius: 999px;
       padding: 5px 10px;
-      font-family: var(--mono);
+      font-family: var(--font-mono);
       font-size: 12px;
+      color: var(--text-secondary);
     }
 
     .chip button {
@@ -120,16 +237,28 @@
 
     .btn {
       border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #1b2029;
-      color: var(--text);
+      border-radius: 6px;
+      background: var(--bg-raised);
+      color: var(--text-secondary);
       padding: 8px 12px;
       cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: all 0.12s;
+    }
+
+    .btn:hover {
+      border-color: #3a4052;
+      color: var(--text-primary);
+      background: var(--bg-hover);
     }
 
     .btn.primary {
-      background: rgba(61, 142, 255, .15);
-      border-color: var(--accent);
+      background: rgba(61, 142, 255, 0.15);
+      border-color: var(--accent-blue);
       color: #9fc4ff;
     }
 
@@ -140,25 +269,43 @@
 
     .inline {
       display: flex;
-      gap: 14px;
+      gap: 12px;
       align-items: center;
       flex-wrap: wrap;
     }
 
+    .inline label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      letter-spacing: 0.03em;
+      text-transform: none;
+      color: var(--text-secondary);
+    }
+
+    .inline input[type="radio"] {
+      accent-color: var(--accent-blue);
+    }
+
     .hint {
       margin-top: 8px;
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 11px;
+      color: var(--text-muted);
     }
 
     .status {
-      font-size: 12px;
+      font-size: 11px;
       margin-top: 8px;
       min-height: 18px;
+      font-family: var(--font-mono);
+      letter-spacing: 0.02em;
     }
 
-    .status.ok { color: var(--ok); }
-    .status.err { color: var(--danger); }
+    .status.ok { color: var(--accent-green); }
+    .status.err { color: var(--accent-red); }
 
     .footer {
       display: flex;
@@ -179,8 +326,11 @@
     <div class="card">
       <h2>Local timezone</h2>
       <label for="localTimezoneInput">IANA timezone (searchable)</label>
-      <input id="localTimezoneInput" type="text" list="localTimezoneOptions" placeholder="Start typing a timezone" autocomplete="off" />
-      <datalist id="localTimezoneOptions"></datalist>
+      <div class="combo" id="localTimezoneCombo">
+        <input id="localTimezoneInput" type="text" placeholder="Start typing a timezone" autocomplete="off" />
+        <button id="localTimezoneToggle" class="combo-toggle" type="button" aria-label="Toggle local timezone list">▾</button>
+        <ul id="localTimezoneList" class="combo-list" role="listbox" aria-label="Local timezone options"></ul>
+      </div>
       <div class="hint">Used when source timezone is set to <strong>Local</strong>.</div>
     </div>
 
@@ -189,8 +339,11 @@
       <div class="row">
         <div>
           <label for="timezoneToAddInput">Add timezone (searchable)</label>
-          <input id="timezoneToAddInput" type="text" list="timezoneToAddOptions" placeholder="Start typing a timezone" autocomplete="off" />
-          <datalist id="timezoneToAddOptions"></datalist>
+          <div class="combo" id="timezoneToAddCombo">
+            <input id="timezoneToAddInput" type="text" placeholder="Start typing a timezone" autocomplete="off" />
+            <button id="timezoneToAddToggle" class="combo-toggle" type="button" aria-label="Toggle add timezone list">▾</button>
+            <ul id="timezoneToAddList" class="combo-list" role="listbox" aria-label="Timezone options to add"></ul>
+          </div>
         </div>
         <button id="btnAddTimezone" class="btn" type="button">Add</button>
       </div>
