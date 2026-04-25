@@ -126,3 +126,16 @@ Feature: DevClock popup conversions
     When I close and re-open the extension popup
     Then "UK/London" should still be the active toggle
     And the new preferences should have active source timezone "Europe/London"
+
+  Scenario: Apply changed local timezone as conversion target
+    Given popup local timezone is "Asia/Tokyo"
+    When I enter the timestamp "2024-06-10T14:30:00Z"
+    Then the converted ISO should be "2024-06-10T23:30:00+09:00"
+
+  Scenario: Add source timezone and render toggle
+    Given popup preferences include source timezone "Asia/Singapore"
+    Then a source timezone toggle for "Asia/Singapore" should be visible
+
+  Scenario: Remove source timezone and hide toggle
+    Given popup preferences exclude source timezone "Europe/London"
+    Then a source timezone toggle for "Europe/London" should not be visible

@@ -9,7 +9,9 @@
   }
 
   const els = {
+    localTimezoneSearch: document.getElementById("localTimezoneSearch"),
     localTimezone: document.getElementById("localTimezone"),
+    timezoneToAddSearch: document.getElementById("timezoneToAddSearch"),
     timezoneToAdd: document.getElementById("timezoneToAdd"),
     btnAddTimezone: document.getElementById("btnAddTimezone"),
     sourceTimezoneChips: document.getElementById("sourceTimezoneChips"),
@@ -23,6 +25,7 @@
   const LOCKED_TIMEZONES = new Set(["UTC", "LOCAL"]);
 
   let currentPrefs = null;
+  let timezoneOptions = [];
 
   function setStatus(message, type = "ok") {
     els.status.textContent = message;
@@ -51,9 +54,9 @@
     ];
   }
 
-  function fillSelectWithTimezones(selectEl, includeLocal = false) {
-    const zones = getTimezoneOptions();
+  function fillSelectWithTimezones(selectEl, zones, includeLocal = false) {
     const options = includeLocal ? ["LOCAL", ...zones] : zones;
+    const previousValue = selectEl.value;
 
     selectEl.innerHTML = "";
     for (const zone of options) {
@@ -62,6 +65,24 @@
       option.textContent = zone;
       selectEl.appendChild(option);
     }
+
+    if (previousValue && options.includes(previousValue)) {
+      selectEl.value = previousValue;
+    }
+  }
+
+  function filterTimezones(query) {
+    const normalized = (query || "").trim().toLowerCase();
+    if (!normalized) return timezoneOptions;
+    return timezoneOptions.filter(zone => zone.toLowerCase().includes(normalized));
+  }
+
+  function refreshTimezoneSelects() {
+    const localZones = filterTimezones(els.localTimezoneSearch?.value);
+    const addZones = filterTimezones(els.timezoneToAddSearch?.value);
+
+    fillSelectWithTimezones(els.localTimezone, localZones, false);
+    fillSelectWithTimezones(els.timezoneToAdd, addZones, true);
   }
 
   function renderTimezoneChips() {
@@ -112,8 +133,8 @@
   }
 
   async function load() {
-    fillSelectWithTimezones(els.localTimezone, false);
-    fillSelectWithTimezones(els.timezoneToAdd, true);
+    timezoneOptions = getTimezoneOptions();
+    refreshTimezoneSelects();
 
     currentPrefs = await prefsApi.getPreferences();
     renderFormFromPrefs();
@@ -132,6 +153,16 @@
       } else {
         setStatus(`${zone} is already in the list.`, "err");
       }
+    });
+
+    els.localTimezoneSearch?.addEventListener("input", () => {
+      const selected = els.localTimezone.value;
+      refreshTimezoneSelects();
+      if (selected) els.localTimezone.value = selected;
+    });
+
+    els.timezoneToAddSearch?.addEventListener("input", () => {
+      refreshTimezoneSelects();
     });
 
     els.btnSave.addEventListener("click", async () => {

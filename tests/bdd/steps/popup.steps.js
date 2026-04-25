@@ -82,6 +82,18 @@ Given('popup query provider is {string}', async function (provider) {
   await this.page.waitForSelector('#timeInput');
 });
 
+Given('popup local timezone is {string}', async function (localTimezone) {
+  await this.page.evaluate(({ localTimezone, defaults }) => {
+    const key = 'devClockPreferences';
+    const current = JSON.parse(localStorage.getItem(key) || 'null') || defaults;
+    const next = { ...defaults, ...current, localTimezone };
+    localStorage.setItem(key, JSON.stringify(next));
+  }, { localTimezone, defaults: DEFAULT_PREFS });
+
+  await this.page.reload();
+  await this.page.waitForSelector('#timeInput');
+});
+
 Given('popup hour format is {string}', async function (hourFormat) {
   await this.page.evaluate(({ hourFormat, defaults }) => {
     const key = 'devClockPreferences';
@@ -99,6 +111,35 @@ Given('only legacy source timezone {string} exists', async function (timezone) {
     localStorage.removeItem('devClockPreferences');
     localStorage.setItem('sourceTz', timezone);
   }, timezone);
+
+  await this.page.reload();
+  await this.page.waitForSelector('#timeInput');
+});
+
+Given('popup preferences exclude source timezone {string}', async function (timezone) {
+  await this.page.evaluate(({ timezone, defaults }) => {
+    const key = 'devClockPreferences';
+    const current = JSON.parse(localStorage.getItem(key) || 'null') || defaults;
+    const nextSourceTimezones = (current.sourceTimezones || defaults.sourceTimezones)
+      .filter(z => z !== timezone);
+
+    for (const required of ['UTC', 'LOCAL']) {
+      if (!nextSourceTimezones.includes(required)) nextSourceTimezones.push(required);
+    }
+
+    const activeSourceTimezone = nextSourceTimezones.includes(current.activeSourceTimezone)
+      ? current.activeSourceTimezone
+      : nextSourceTimezones[0];
+
+    const next = {
+      ...defaults,
+      ...current,
+      sourceTimezones: nextSourceTimezones,
+      activeSourceTimezone,
+    };
+
+    localStorage.setItem(key, JSON.stringify(next));
+  }, { timezone, defaults: DEFAULT_PREFS });
 
   await this.page.reload();
   await this.page.waitForSelector('#timeInput');
@@ -241,6 +282,11 @@ Then('{string} should still be the active toggle', async function (timezone) {
 Then('a source timezone toggle for {string} should be visible', async function (timezone) {
   const selector = selectorForTimezone(timezone);
   await expect(this.page.locator(selector)).toBeVisible();
+});
+
+Then('a source timezone toggle for {string} should not be visible', async function (timezone) {
+  const selector = selectorForTimezone(timezone);
+  await expect(this.page.locator(selector)).toHaveCount(0);
 });
 
 Then('the query preview label should contain {string}', async function (value) {
