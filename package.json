@@ -1,7 +1,7 @@
 {
   "name": "dev-clock-extention",
   "private": true,
-  "version": "1.3.0",
+  "version": "1.3.1",
   "scripts": {
     "sync:manifest-version": "node scripts/sync-manifest-version.js",
     "sync:luxon": "node scripts/sync-luxon.js",
