@@ -385,6 +385,19 @@
     </div>
 
     <div class="card">
+      <h2>Query Window</h2>
+      <label for="queryWindowSelect">Time range offset (± around matched timestamp)</label>
+      <select id="queryWindowSelect">
+        <option value="30">±30 seconds</option>
+        <option value="60">±1 minute</option>
+        <option value="120">±2 minutes</option>
+        <option value="300">±5 minutes</option>
+        <option value="600">±10 minutes</option>
+        <option value="1800">±30 minutes</option>
+      </select>
+    </div>
+
+    <div class="card">
       <h2>Time Display Format</h2>
       <div class="inline">
         <label><input type="radio" name="hourFormat" value="24h" /> Twenty Four Hour</label>

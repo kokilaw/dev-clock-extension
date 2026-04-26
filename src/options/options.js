@@ -27,6 +27,7 @@
     btnAddTimezone: document.getElementById("btnAddTimezone"),
     sourceTimezoneChips: document.getElementById("sourceTimezoneChips"),
     hourFormatRadios: document.querySelectorAll('input[name="hourFormat"]'),
+    queryWindowSelect: document.getElementById("queryWindowSelect"),
     btnSave: document.getElementById("btnSave"),
     btnReset: document.getElementById("btnReset"),
     status: document.getElementById("status"),
@@ -307,6 +308,10 @@
       r.checked = r.value === currentPrefs.hourFormat;
     });
 
+    if (els.queryWindowSelect) {
+      els.queryWindowSelect.value = String(currentPrefs.queryWindowSeconds || 60);
+    }
+
     renderTimezoneChips();
   }
 
@@ -317,6 +322,7 @@
       localTimezone: els.localTimezoneInput.value.trim(),
       queryProvider: els.queryProviderInput.dataset.value || currentPrefs.queryProvider,
       hourFormat: selectedHour,
+      queryWindowSeconds: Number(els.queryWindowSelect?.value || 60),
       sourceTimezones: currentPrefs.sourceTimezones,
       activeSourceTimezone: currentPrefs.activeSourceTimezone,
     };

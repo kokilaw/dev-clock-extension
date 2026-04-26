@@ -27,9 +27,17 @@ if (!Parser || typeof Parser.parseTimestamp !== "function") {
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const DEFAULT_TARGET_TZ = "Australia/Melbourne";
-const SPLUNK_WINDOW = 1; // ± minutes for the Splunk fragment
 const PREFERENCES_STORAGE_KEY = "devClockPreferences";
 const PENDING_INPUT_STORAGE_KEY = "devClockPendingInput";
+
+const QUERY_WINDOW_OPTIONS = [
+  { seconds: 30,   label: "±30s" },
+  { seconds: 60,   label: "±1m" },
+  { seconds: 120,  label: "±2m" },
+  { seconds: 300,  label: "±5m" },
+  { seconds: 600,  label: "±10m" },
+  { seconds: 1800, label: "±30m" },
+];
 
 const TZ_DISPLAY_NAMES = {
   "America/New_York": "US/ET",
@@ -59,6 +67,7 @@ const state = {
   hourFormat:        "24h",
   targetTz:          DEFAULT_TARGET_TZ,
   targetTzSelection: "LOCAL",
+  queryWindowSeconds: 60,
 };
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
@@ -81,6 +90,7 @@ const els = {
   splunkPreview:    $("splunkPreview"),
   queryPreviewToggle: $("queryPreviewToggle"),
   splunkText:       $("splunkPreviewText"),
+  queryWindowPills: $("queryWindowPills"),
   queryPreviewLabel: $("queryPreviewLabel"),
   targetMeta:       $("targetMeta"),
   resultTargetBadge: $("resultTargetBadge"),
@@ -339,27 +349,27 @@ function convertToTargetZone(millis) {
 }
 
 /**
- * buildSplunkFragment(melbourneDT, windowMinutes)
+ * buildSplunkFragment(melbourneDT, windowSeconds)
  *
  * Returns a Splunk SPL time fragment:
  *   _time >= "2024-06-10T14:29:00+10:00" AND _time <= "2024-06-10T14:31:00+10:00"
  */
-function buildSplunkFragment(melbourneDT, windowMinutes = SPLUNK_WINDOW) {
-  const from = melbourneDT.minus({ minutes: windowMinutes });
-  const to   = melbourneDT.plus({  minutes: windowMinutes });
+function buildSplunkFragment(melbourneDT, windowSeconds = 60) {
+  const from = melbourneDT.minus({ seconds: windowSeconds });
+  const to   = melbourneDT.plus({  seconds: windowSeconds });
   const fmt  = dt => dt.set({ millisecond: 0 }).toISO({ suppressMilliseconds: true });
   return `_time >= "${fmt(from)}" AND _time <= "${fmt(to)}"`;
 }
 
-function buildGrafanaFragment(melbourneDT, windowMinutes = SPLUNK_WINDOW) {
-  const from = melbourneDT.minus({ minutes: windowMinutes }).toUTC().toMillis();
-  const to = melbourneDT.plus({ minutes: windowMinutes }).toUTC().toMillis();
+function buildGrafanaFragment(melbourneDT, windowSeconds = 60) {
+  const from = melbourneDT.minus({ seconds: windowSeconds }).toUTC().toMillis();
+  const to = melbourneDT.plus({ seconds: windowSeconds }).toUTC().toMillis();
   return `from=${from}&to=${to}`;
 }
 
-function buildCloudWatchFragment(melbourneDT, windowMinutes = SPLUNK_WINDOW) {
-  const from = melbourneDT.minus({ minutes: windowMinutes }).toUTC().set({ millisecond: 0 }).toISO({ suppressMilliseconds: true });
-  const to = melbourneDT.plus({ minutes: windowMinutes }).toUTC().set({ millisecond: 0 }).toISO({ suppressMilliseconds: true });
+function buildCloudWatchFragment(melbourneDT, windowSeconds = 60) {
+  const from = melbourneDT.minus({ seconds: windowSeconds }).toUTC().set({ millisecond: 0 }).toISO({ suppressMilliseconds: true });
+  const to = melbourneDT.plus({ seconds: windowSeconds }).toUTC().set({ millisecond: 0 }).toISO({ suppressMilliseconds: true });
   return `filter @timestamp >= '${from}' and @timestamp <= '${to}'`;
 }
 
@@ -384,7 +394,7 @@ function getActiveProvider() {
 }
 
 function buildQueryFragment(melbourneDT) {
-  return getActiveProvider().build(melbourneDT);
+  return getActiveProvider().build(melbourneDT, state.queryWindowSeconds);
 }
 
 function renderQueryPreview(fragment) {
@@ -401,6 +411,34 @@ function applyProviderUi() {
   const provider = getActiveProvider();
   if (els.queryPreviewLabel) {
     els.queryPreviewLabel.textContent = `Query Preview · ${provider.name}`;
+  }
+}
+
+function renderQueryWindowPills() {
+  if (!els.queryWindowPills) return;
+
+  els.queryWindowPills.innerHTML = "";
+
+  for (const opt of QUERY_WINDOW_OPTIONS) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `query-window-pill${opt.seconds === state.queryWindowSeconds ? " active" : ""}`;
+    btn.textContent = opt.label;
+    btn.dataset.seconds = opt.seconds;
+
+    btn.addEventListener("click", async () => {
+      state.queryWindowSeconds = opt.seconds;
+      renderQueryWindowPills();
+      if (state.parsedMillis) {
+        const targetDT = convertToTargetZone(state.parsedMillis);
+        renderQueryPreview(buildQueryFragment(targetDT));
+      }
+      if (globalThis.DevClockPreferences?.savePreferences) {
+        globalThis.DevClockPreferences.savePreferences({ queryWindowSeconds: opt.seconds }).catch(() => {});
+      }
+    });
+
+    els.queryWindowPills.appendChild(btn);
   }
 }
 
@@ -714,6 +752,7 @@ async function loadActiveTimezonePreference() {
     state.queryProvider = state.prefs?.queryProvider || "splunk";
     state.hourFormat = state.prefs?.hourFormat || "24h";
     state.targetTz = state.prefs?.localTimezone || DEFAULT_TARGET_TZ;
+    state.queryWindowSeconds = state.prefs?.queryWindowSeconds || 60;
     return state.prefs?.activeSourceTimezone || null;
   }
 
@@ -722,10 +761,12 @@ async function loadActiveTimezonePreference() {
     localTimezone: DEFAULT_TARGET_TZ,
     queryProvider: "splunk",
     hourFormat: "24h",
+    queryWindowSeconds: 60,
   };
   state.queryProvider = "splunk";
   state.hourFormat = "24h";
   state.targetTz = state.prefs.localTimezone;
+  state.queryWindowSeconds = 60;
 
   return localStorage.getItem("sourceTz");
 }
@@ -746,10 +787,12 @@ async function refreshPreferencesFromStorage() {
   state.queryProvider = state.prefs?.queryProvider || "splunk";
   state.hourFormat = state.prefs?.hourFormat || "24h";
   state.targetTz = state.prefs?.localTimezone || DEFAULT_TARGET_TZ;
+  state.queryWindowSeconds = state.prefs?.queryWindowSeconds || 60;
 
   renderTimezoneToggles(state.prefs?.sourceTimezones, state.prefs?.activeSourceTimezone || state.sourceTz);
   applyProviderUi();
   applyTargetUi();
+  renderQueryWindowPills();
   updateTzOffsets();
   updateNowBadge();
 
@@ -786,6 +829,7 @@ async function init() {
   renderTimezoneToggles(state.prefs?.sourceTimezones, savedTz || state.sourceTz);
   applyProviderUi();
   applyTargetUi();
+  renderQueryWindowPills();
   setQueryPreviewExpanded(false);
 
   // ── Pending input from context menu ──

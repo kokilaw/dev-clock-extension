@@ -578,7 +578,7 @@
     }
 
     .splunk-preview.expanded .splunk-preview-body {
-      max-height: 132px;
+      max-height: 160px;
       opacity: 1;
       transform: translateY(0);
       margin-top: 4px;
@@ -597,6 +597,38 @@
     .splunk-preview-text .kw { color: #c792ea; }
     .splunk-preview-text .op { color: var(--text-secondary); }
     .splunk-preview-text .val { color: #c3e88d; }
+
+    .query-window-pills {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .query-window-pill {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+      line-height: 1.6;
+    }
+
+    .query-window-pill:hover {
+      color: var(--text-secondary);
+      border-color: var(--text-secondary);
+    }
+
+    .query-window-pill.active {
+      color: var(--accent-blue);
+      border-color: #3d8eff66;
+      background: #3d8eff18;
+    }
 
     /* ── Footer ─────────────────────────────────────────── */
     .footer {
@@ -742,6 +774,7 @@
       <span class="splunk-preview-chevron" aria-hidden="true">▾</span>
     </button>
     <div class="splunk-preview-body" id="queryPreviewBody">
+      <div class="query-window-pills" id="queryWindowPills"></div>
       <div class="splunk-preview-text copyable" id="splunkPreviewText" role="button" tabindex="0" aria-label="Copy query text" title="Click to copy query text"></div>
     </div>
   </div>

@@ -12,6 +12,7 @@
     activeSourceTimezone: "UTC",
     queryProvider: "splunk",
     hourFormat: "24h",
+    queryWindowSeconds: 60,
   };
 
   function canUseChromeStorage() {
@@ -55,6 +56,10 @@
       ? candidate.queryProvider
       : DEFAULTS.queryProvider;
     const hourFormat = ["12h", "24h"].includes(candidate.hourFormat) ? candidate.hourFormat : DEFAULTS.hourFormat;
+    const VALID_WINDOW_SECONDS = [30, 60, 120, 300, 600, 1800];
+    const queryWindowSeconds = VALID_WINDOW_SECONDS.includes(Number(candidate.queryWindowSeconds))
+      ? Number(candidate.queryWindowSeconds)
+      : DEFAULTS.queryWindowSeconds;
 
     return {
       schemaVersion: SCHEMA_VERSION,
@@ -63,6 +68,7 @@
       activeSourceTimezone,
       queryProvider,
       hourFormat,
+      queryWindowSeconds,
     };
   }
 
