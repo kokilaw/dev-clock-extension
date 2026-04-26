@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { DateTime } = require('luxon');
-const { parseTimestamp } = require('../../src/shared/timestamp-parser');
+const { parseTimestamp, shouldAutofillCandidate } = require('../../src/shared/timestamp-parser');
 
 const FIXED_NOW = DateTime.fromISO('2026-04-26T15:45:30', { zone: 'UTC' });
 
@@ -89,6 +89,55 @@ test('returns error for invalid input', () => {
 
 test('returns empty error for blank input', () => {
   assert.deepEqual(parse('   ', 'UTC'), { error: 'empty' });
+});
+
+test('autofill candidate detection accepts supported timestamp families', () => {
+  const accepted = [
+    '1718000000',
+    '1718000000000',
+    '2024-06-10T14:30:00Z',
+    '2024-06-10T14:30:00',
+    '2024-06-10',
+    '2026/04/25 14:30:00',
+    '1545',
+    '0005',
+    '09:00',
+    '9pm',
+    'yesterday at 5pm',
+    'last monday 08:30',
+    'October 30th 2pm',
+    '-30m',
+    'now-1h',
+    '10/Oct/2000:13:55:36 -0700',
+    'Fri, 25 Apr 2026 14:30:00 GMT',
+  ];
+
+  for (const raw of accepted) {
+    assert.equal(
+      shouldAutofillCandidate(raw, 'UTC', { now: FIXED_NOW }),
+      true,
+      `Expected autofill detector to accept: ${raw}`
+    );
+  }
+});
+
+test('autofill candidate detection rejects non-time content', () => {
+  const rejected = [
+    'DevClock 1.0.0',
+    'Release v2.3.1 is live',
+    'Meeting with Bob',
+    'JIRA-1234',
+    'Fix issue 1002',
+    'alpha beta gamma',
+  ];
+
+  for (const raw of rejected) {
+    assert.equal(
+      shouldAutofillCandidate(raw, 'UTC', { now: FIXED_NOW }),
+      false,
+      `Expected autofill detector to reject: ${raw}`
+    );
+  }
 });
 
 test('normalizes surrounding brackets and whitespace before parsing', () => {

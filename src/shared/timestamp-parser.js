@@ -447,6 +447,52 @@
     return { error: `Unable to parse date: "${str}"` };
   }
 
+  function shouldAutofillCandidate(raw, sourceTz, options = {}) {
+    const value = stripSurroundingNoise(raw);
+    if (!value) return false;
+
+    const lower = value.toLowerCase();
+
+    const hasEpoch = /^\d{10}(?:\d{3})?$/.test(value);
+    const hasMilitaryTime = /^\d{4}$/.test(value);
+    const hasTimeOfDay = /\d{1,2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?/.test(value);
+    const hasIsoLikeDate = /\d{4}-\d{1,2}-\d{1,2}/.test(value);
+    const hasSlashDate = /\b\d{1,4}\/\d{1,2}\/\d{1,4}\b/.test(value);
+    const hasRelativeShorthand = /^(?:now\s*)?-\s*\d+\s*[smhd]$/i.test(value);
+    const hasTimezoneMarker = /\b(?:utc|gmt|[a-z]{2,5})\b/i.test(value) && /(?:\d{1,2}:\d{2}|\d{4}-\d{1,2}-\d{1,2}|\d{1,4}\/\d{1,2}\/\d{1,4})/.test(value);
+    const hasNaturalKeywords =
+      /\b(today|yesterday|tomorrow|last|noon|midnight)\b/i.test(value) ||
+      /(?:\b|\d\s*)(am|pm)\b/i.test(value);
+    const hasMonthOrWeekdayWords = /\b(january|february|march|april|may|june|july|august|september|october|november|december|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(value);
+
+    const hasStrongSignal =
+      hasEpoch ||
+      hasMilitaryTime ||
+      hasTimeOfDay ||
+      hasIsoLikeDate ||
+      hasSlashDate ||
+      hasRelativeShorthand ||
+      hasTimezoneMarker ||
+      hasNaturalKeywords ||
+      hasMonthOrWeekdayWords;
+
+    if (!hasStrongSignal) return false;
+
+    const looksVersionish =
+      /\b\d+\.\d+(?:\.\d+)*\b/.test(lower) &&
+      /[a-z]/i.test(lower) &&
+      !hasTimeOfDay &&
+      !hasIsoLikeDate &&
+      !hasSlashDate &&
+      !hasNaturalKeywords &&
+      !hasMonthOrWeekdayWords;
+
+    if (looksVersionish) return false;
+
+    const parsed = parseTimestamp(value, sourceTz, options);
+    return !parsed.error;
+  }
+
   function parseNaturalTimestamp(raw, nowInSource, zone) {
     const normalized = raw.trim().toLowerCase().replace(/\s+/g, " ");
 
@@ -555,6 +601,7 @@
 
   const api = {
     parseTimestamp,
+    shouldAutofillCandidate,
     parseNaturalTimestamp,
     parseTimeOfDay,
     applyParsedTime,

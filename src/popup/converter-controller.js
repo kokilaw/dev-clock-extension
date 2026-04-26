@@ -629,6 +629,14 @@ function tryAutofillFromCandidate(candidate) {
   const value = (candidate || "").trim();
   if (!value) return false;
 
+  if (typeof Parser.shouldAutofillCandidate === "function") {
+    const okToAutofill = Parser.shouldAutofillCandidate(value, state.sourceTz, {
+      localTimezone: state.prefs?.localTimezone,
+      now: Luxon.DateTime.now(),
+    });
+    if (!okToAutofill) return false;
+  }
+
   const parsed = parseTimestamp(value, state.sourceTz);
   if (parsed.error) return false;
 
