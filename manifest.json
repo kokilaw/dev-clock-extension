@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DevClock",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Convert timestamps across configurable timezones and generate copy-ready log query windows for Splunk, Grafana, and CloudWatch.",
   "action": {
     "default_popup": "converter-popup.html",
