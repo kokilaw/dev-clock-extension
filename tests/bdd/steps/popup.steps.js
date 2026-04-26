@@ -71,36 +71,39 @@ Given('popup preferences include source timezone {string}', async function (time
 });
 
 Given('popup query provider is {string}', async function (provider) {
-  await this.page.evaluate(({ provider, defaults }) => {
-    const key = 'devClockPreferences';
-    const current = JSON.parse(localStorage.getItem(key) || 'null') || defaults;
-    const next = { ...defaults, ...current, queryProvider: provider };
-    localStorage.setItem(key, JSON.stringify(next));
-  }, { provider, defaults: DEFAULT_PREFS });
+  await this.page.addInitScript(({ key, provider }) => {
+    try {
+      const prefs = JSON.parse(localStorage.getItem(key) || '{}');
+      prefs.queryProvider = provider;
+      localStorage.setItem(key, JSON.stringify(prefs));
+    } catch {}
+  }, { key: 'devClockPreferences', provider });
 
   await this.page.reload();
   await this.page.waitForSelector('#timeInput');
 });
 
 Given('popup local timezone is {string}', async function (localTimezone) {
-  await this.page.evaluate(({ localTimezone, defaults }) => {
-    const key = 'devClockPreferences';
-    const current = JSON.parse(localStorage.getItem(key) || 'null') || defaults;
-    const next = { ...defaults, ...current, localTimezone };
-    localStorage.setItem(key, JSON.stringify(next));
-  }, { localTimezone, defaults: DEFAULT_PREFS });
+  await this.page.addInitScript(({ key, localTimezone }) => {
+    try {
+      const prefs = JSON.parse(localStorage.getItem(key) || '{}');
+      prefs.localTimezone = localTimezone;
+      localStorage.setItem(key, JSON.stringify(prefs));
+    } catch {}
+  }, { key: 'devClockPreferences', localTimezone });
 
   await this.page.reload();
   await this.page.waitForSelector('#timeInput');
 });
 
 Given('popup hour format is {string}', async function (hourFormat) {
-  await this.page.evaluate(({ hourFormat, defaults }) => {
-    const key = 'devClockPreferences';
-    const current = JSON.parse(localStorage.getItem(key) || 'null') || defaults;
-    const next = { ...defaults, ...current, hourFormat };
-    localStorage.setItem(key, JSON.stringify(next));
-  }, { hourFormat, defaults: DEFAULT_PREFS });
+  await this.page.addInitScript(({ key, hourFormat }) => {
+    try {
+      const prefs = JSON.parse(localStorage.getItem(key) || '{}');
+      prefs.hourFormat = hourFormat;
+      localStorage.setItem(key, JSON.stringify(prefs));
+    } catch {}
+  }, { key: 'devClockPreferences', hourFormat });
 
   await this.page.reload();
   await this.page.waitForSelector('#timeInput');
