@@ -60,8 +60,13 @@
     h1 {
       font-family: var(--font-mono);
       font-size: 16px;
+      font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+    }
+
+    .brand-accent {
+      color: var(--accent-cyan);
     }
 
     .sub {
@@ -337,36 +342,36 @@
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>DevClock Preferences</h1>
+      <h1>Dev<span class="brand-accent">Clock</span> Preferences</h1>
       <p class="sub">Settings are persisted and restored across browser restarts.</p>
     </div>
 
     <div class="card">
       <h2>Default Target Time Zone</h2>
-      <label for="localTimezoneInput">IANA Timezone (Searchable)</label>
+      <label for="localTimezoneInput">IANA timezone (searchable)</label>
       <div class="combo" id="localTimezoneCombo">
         <input id="localTimezoneInput" type="text" placeholder="Start typing a timezone" autocomplete="off" />
         <button id="localTimezoneToggle" class="combo-toggle" type="button" aria-label="Toggle default target timezone list">▾</button>
         <ul id="localTimezoneList" class="combo-list" role="listbox" aria-label="Default target timezone options"></ul>
       </div>
-      <div class="hint">Used as the default selected target timezone in the popup. Default is your current browser timezone.</div>
+      <div class="hint">The primary timezone your timestamps are converted to. Pre-selected every time you open DevClock.</div>
     </div>
 
     <div class="card">
       <h2>Time Zone Display Options</h2>
       <div class="row">
         <div>
-          <label for="timezoneToAddInput">Add Timezone (Searchable)</label>
+          <label for="timezoneToAddInput">Add timezone (searchable)</label>
           <div class="combo" id="timezoneToAddCombo">
             <input id="timezoneToAddInput" type="text" placeholder="Start typing a timezone" autocomplete="off" />
             <button id="timezoneToAddToggle" class="combo-toggle" type="button" aria-label="Toggle add timezone list">▾</button>
-            <ul id="timezoneToAddList" class="combo-list" role="listbox" aria-label="Timezone options to add"></ul>
+            <ul id="timezoneToAddList" class="combo-list" role="listbox" aria-label="timezone options to add"></ul>
           </div>
         </div>
-        <button id="btnAddTimezone" class="btn" type="button">Add Timezone</button>
+        <button id="btnAddTimezone" class="btn" type="button">Add timezone</button>
       </div>
       <div id="sourceTimezoneChips" class="chips"></div>
-      <div class="hint">These options are used for both source toggles and target dropdown selection in the popup. Default options are UTC and LOCAL. LOCAL is always kept.</div>
+      <div class="hint">Customise which timezones appear as quick-toggle buttons in the popup. UTC and LOCAL are always included.</div>
     </div>
 
     <div class="card">

@@ -7,7 +7,7 @@ function createSelectionMenu() {
   chrome.contextMenus.create(
     {
       id: CONTEXT_MENU_ID,
-      title: "Convert timestamp with DevClock",
+      title: "Convert time with DevClock",
       contexts: ["selection"],
     },
     () => {
