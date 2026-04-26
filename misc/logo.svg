@@ -1,0 +1,18 @@
+<svg width="180" height="48" viewBox="0 0 180 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Clock icon (28x28, centered at 24,24) -->
+  <circle cx="24" cy="24" r="11.5" stroke="#3d8eff" stroke-width="1.6"/>
+  <path d="M24 18.5V24L27.8 27" stroke="#00d4c8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="24" cy="24" r="1.4" fill="#00d4c8"/>
+
+  <!-- "DevClock" as a single text block using tspan for two-tone color -->
+  <text
+    x="47"
+    y="29"
+    font-family="'JetBrains Mono', 'Fira Code', monospace"
+    font-size="15"
+    font-weight="700"
+    letter-spacing="1.5"
+  >
+    <tspan fill="#e8eaf0">DEV</tspan><tspan fill="#00d4c8">CLOCK</tspan>
+  </text>
+</svg>
