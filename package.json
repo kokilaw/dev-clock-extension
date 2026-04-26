@@ -1,5 +1,5 @@
 {
-  "name": "dev-clock-extention",
+  "name": "dev-clock-extension",
   "private": true,
   "version": "1.3.1",
   "scripts": {
@@ -8,7 +8,7 @@
     "sync:parser-vendors": "node scripts/build-parser-vendors.js",
     "prebuild:extension": "npm run sync:luxon && npm run sync:parser-vendors",
     "build:extension": "node scripts/build-extension.js",
-    "package:extension": "npm run build:extension && VERSION=$(node -p 'require(\"./package.json\").version') && cd dist && rm -f ../dev-clock-extention-v*.zip && zip -r ../dev-clock-extention-v$VERSION.zip .",
+    "package:extension": "npm run build:extension && VERSION=$(node -p 'require(\"./package.json\").version') && cd dist && rm -f ../dev-clock-extension-v*.zip && zip -r ../dev-clock-extension-v$VERSION.zip .",
     "preversion": "npm run test:integration",
     "version": "npm run sync:manifest-version && git add manifest.json",
     "release:patch": "npm version patch",

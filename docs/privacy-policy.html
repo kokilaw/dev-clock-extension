@@ -335,7 +335,7 @@
       </p>
       <p>
         You can review the full history of changes to this page in the
-        <a href="https://github.com/kokilaw/dev-clock-extention" target="_blank" rel="noopener noreferrer">GitHub repository</a>.
+        <a href="https://github.com/kokilaw/dev-clock-extension" target="_blank" rel="noopener noreferrer">GitHub repository</a>.
       </p>
     </div>
 
@@ -347,8 +347,8 @@
         an issue on GitHub:
       </p>
       <p>
-        <a href="https://github.com/kokilaw/dev-clock-extention/issues" target="_blank" rel="noopener noreferrer">
-          github.com/kokilaw/dev-clock-extention/issues
+        <a href="https://github.com/kokilaw/dev-clock-extension/issues" target="_blank" rel="noopener noreferrer">
+          github.com/kokilaw/dev-clock-extension/issues
         </a>
       </p>
     </div>
@@ -360,7 +360,7 @@
 
   </div>
   <script>
-    fetch("https://api.github.com/repos/kokilaw/dev-clock-extention/releases/latest", {
+    fetch("https://api.github.com/repos/kokilaw/dev-clock-extension/releases/latest", {
       headers: { Accept: "application/vnd.github+json" }
     })
       .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
@@ -376,7 +376,7 @@
       })
       .catch(function() {
         document.getElementById("ext-version").textContent = "DevClock";
-        document.getElementById("ext-release-date").textContent = "unknown";
+        document.getElementById("ext-release-date").textContent = "See GitHub for latest release";
       });
   </script>
 </body>

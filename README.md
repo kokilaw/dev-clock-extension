@@ -4,7 +4,7 @@
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
 ![BDD Tested](https://img.shields.io/badge/BDD-Cucumber-23D96C)
 ![Browser Automation](https://img.shields.io/badge/Browser%20Automation-Playwright-2EAD33?logo=playwright&logoColor=white)
-![GitHub Release](https://img.shields.io/github/v/release/kokilaw/dev-clock-extention?label=Release&color=4CAF50)
+![GitHub Release](https://img.shields.io/github/v/release/kokilaw/dev-clock-extension?label=Release&color=4CAF50)
 
 DevClock is a compact Chrome extension that helps engineers convert timestamps from configurable source timezones into a configurable local target timezone and generate copy-ready query windows for multiple log providers.
 
@@ -148,7 +148,7 @@ Each release command runs integration tests, bumps the version, syncs `manifest.
 
 ### Snapshot artifacts
 
-CI on push/PR uploads `dev-clock-extention-snapshot-<commit_sha>.zip` (short retention). Tagged releases publish `dev-clock-extention-v<version>.zip` to GitHub Releases.
+CI on push/PR uploads `dev-clock-extension-snapshot-<commit_sha>.zip` (short retention). Tagged releases publish `dev-clock-extension-v<version>.zip` to GitHub Releases.
 
 </details>
 
@@ -160,5 +160,5 @@ CI on push/PR uploads `dev-clock-extention-snapshot-<commit_sha>.zip` (short ret
 
 ## Privacy Policy
 
-[https://kokilaw.github.io/dev-clock-extention/privacy-policy.html](https://kokilaw.github.io/dev-clock-extention/privacy-policy.html)
+[https://kokilaw.github.io/dev-clock-extension/privacy-policy.html](https://kokilaw.github.io/dev-clock-extension/privacy-policy.html)
 

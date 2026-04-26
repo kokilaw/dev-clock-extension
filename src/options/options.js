@@ -34,7 +34,7 @@
     privacyPolicyLink: document.getElementById("privacyPolicyLink"),
   };
 
-  const PRIVACY_POLICY_URL = "https://kokilaw.github.io/dev-clock-extention/privacy-policy.html";
+  const PRIVACY_POLICY_URL = "https://kokilaw.github.io/dev-clock-extension/privacy-policy.html";
 
   const LOCKED_TIMEZONES = new Set(["LOCAL"]);
 
