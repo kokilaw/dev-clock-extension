@@ -52,7 +52,7 @@
           : sourceTimezones[0];
 
     const localTimezone = isValidTimezone(candidate.localTimezone) ? candidate.localTimezone : DEFAULTS.localTimezone;
-    const queryProvider = ["splunk", "grafana", "cloudwatch"].includes(candidate.queryProvider)
+    const queryProvider = ["splunk", "grafana", "cloudwatch", "datadog", "kibana"].includes(candidate.queryProvider)
       ? candidate.queryProvider
       : DEFAULTS.queryProvider;
     const hourFormat = ["12h", "24h"].includes(candidate.hourFormat) ? candidate.hourFormat : DEFAULTS.hourFormat;

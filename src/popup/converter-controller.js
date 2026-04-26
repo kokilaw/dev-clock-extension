@@ -373,6 +373,18 @@ function buildCloudWatchFragment(melbourneDT, windowSeconds = 60) {
   return `filter @timestamp >= '${from}' and @timestamp <= '${to}'`;
 }
 
+function buildDatadogFragment(melbourneDT, windowSeconds = 60) {
+  const from = melbourneDT.minus({ seconds: windowSeconds }).toUTC().toMillis();
+  const to = melbourneDT.plus({ seconds: windowSeconds }).toUTC().toMillis();
+  return `from_ts=${from}&to_ts=${to}`;
+}
+
+function buildKibanaFragment(melbourneDT, windowSeconds = 60) {
+  const from = melbourneDT.minus({ seconds: windowSeconds }).toUTC().set({ millisecond: 0 }).toISO({ suppressMilliseconds: true });
+  const to = melbourneDT.plus({ seconds: windowSeconds }).toUTC().set({ millisecond: 0 }).toISO({ suppressMilliseconds: true });
+  return `@timestamp >= "${from}" AND @timestamp <= "${to}"`;
+}
+
 const QUERY_PROVIDERS = {
   splunk: {
     name: "Splunk",
@@ -386,6 +398,15 @@ const QUERY_PROVIDERS = {
   cloudwatch: {
     name: "CloudWatch",
     build: buildCloudWatchFragment,
+  },
+  datadog: {
+    name: "Datadog",
+    build: buildDatadogFragment,
+  },
+  kibana: {
+    name: "Kibana",
+    build: buildKibanaFragment,
+    highlight: syntaxHighlightKibana,
   },
 };
 
@@ -586,6 +607,16 @@ function showResult(millis) {
 function syntaxHighlightSplunk(fragment) {
   return fragment
     .replace(/(_time)/g, '<span class="kw">$1</span>')
+    .replace(/(>=|<=|AND)/g, '<span class="op">$1</span>')
+    .replace(/"([^"]+)"/g, '"<span class="val">$1</span>"');
+}
+
+/**
+ * Very lightweight Kibana KQL syntax highlighter.
+ */
+function syntaxHighlightKibana(fragment) {
+  return fragment
+    .replace(/(@timestamp)/g, '<span class="kw">$1</span>')
     .replace(/(>=|<=|AND)/g, '<span class="op">$1</span>')
     .replace(/"([^"]+)"/g, '"<span class="val">$1</span>"');
 }

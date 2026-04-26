@@ -46,6 +46,8 @@
     splunk: "Splunk",
     grafana: "Grafana",
     cloudwatch: "CloudWatch",
+    datadog: "Datadog",
+    kibana: "Kibana",
   };
 
   const comboState = {
