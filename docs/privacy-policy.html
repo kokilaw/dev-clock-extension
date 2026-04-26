@@ -249,8 +249,8 @@
     <!-- Header -->
     <div class="card">
       <h1>Dev<span class="brand-accent">Clock</span> Privacy Policy</h1>
-      <p class="sub">Version 1.2.1 &nbsp;·&nbsp; DevClock Chrome Extension</p>
-      <p class="effective-date">Effective date: April 2025</p>
+      <p class="sub"><span id="ext-version">…</span> &nbsp;·&nbsp; DevClock Chrome Extension</p>
+      <p class="effective-date">Effective date: <span id="ext-release-date">…</span></p>
     </div>
 
     <!-- 1. Overview -->
@@ -355,10 +355,29 @@
 
     <!-- Footer -->
     <div class="card footer">
-      <a href="../options.html" class="footer-link">← Back to Preferences</a>
       <span class="sub">DevClock &nbsp;·&nbsp; No data collected &nbsp;·&nbsp; All processing is local</span>
     </div>
 
   </div>
+  <script>
+    fetch("https://api.github.com/repos/kokilaw/dev-clock-extention/releases/latest", {
+      headers: { Accept: "application/vnd.github+json" }
+    })
+      .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function(data) {
+        var tag = data.tag_name || "";
+        document.getElementById("ext-version").textContent =
+          "Version " + (tag.replace(/^v/, "") || tag);
+        if (data.published_at) {
+          var d = new Date(data.published_at);
+          document.getElementById("ext-release-date").textContent =
+            d.toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" });
+        }
+      })
+      .catch(function() {
+        document.getElementById("ext-version").textContent = "DevClock";
+        document.getElementById("ext-release-date").textContent = "unknown";
+      });
+  </script>
 </body>
 </html>
