@@ -606,9 +606,9 @@ function showResult(millis) {
  */
 function syntaxHighlightSplunk(fragment) {
   return fragment
+    .replace(/"([^"]+)"/g, '"<span class="val">$1</span>"')
     .replace(/(_time)/g, '<span class="kw">$1</span>')
-    .replace(/(>=|<=|AND)/g, '<span class="op">$1</span>')
-    .replace(/"([^"]+)"/g, '"<span class="val">$1</span>"');
+    .replace(/(>=|<=|AND)/g, '<span class="op">$1</span>');
 }
 
 /**
@@ -616,9 +616,9 @@ function syntaxHighlightSplunk(fragment) {
  */
 function syntaxHighlightKibana(fragment) {
   return fragment
+    .replace(/"([^"]+)"/g, '"<span class="val">$1</span>"')
     .replace(/(@timestamp)/g, '<span class="kw">$1</span>')
-    .replace(/(>=|<=|AND)/g, '<span class="op">$1</span>')
-    .replace(/"([^"]+)"/g, '"<span class="val">$1</span>"');
+    .replace(/(>=|<=|AND)/g, '<span class="op">$1</span>');
 }
 
 // ── Controller ─────────────────────────────────────────────────────────────
