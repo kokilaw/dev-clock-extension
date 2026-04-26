@@ -277,6 +277,8 @@
     renderCombo(comboKey);
   }
 
+  let dragSrcZone = null;
+
   function renderTimezoneChips() {
     els.sourceTimezoneChips.innerHTML = "";
 
@@ -284,7 +286,12 @@
       const chip = document.createElement("span");
       chip.className = `chip${LOCKED_TIMEZONES.has(zone) ? " locked" : ""}`;
       chip.dataset.zone = zone;
-      chip.innerHTML = `<span>${zone}</span><button type="button" aria-label="Remove ${zone}">✕</button>`;
+      chip.draggable = true;
+      chip.innerHTML = `
+        <span class="chip-drag-handle" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="chip-label">${zone}</span>
+        <button type="button" aria-label="Remove ${zone}">✕</button>
+      `;
 
       const removeBtn = chip.querySelector("button");
       if (removeBtn && !LOCKED_TIMEZONES.has(zone)) {
@@ -296,6 +303,44 @@
           renderTimezoneChips();
         });
       }
+
+      chip.addEventListener("dragstart", e => {
+        dragSrcZone = zone;
+        chip.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+      });
+
+      chip.addEventListener("dragend", () => {
+        dragSrcZone = null;
+        document.querySelectorAll(".chip").forEach(c => c.classList.remove("dragging", "drag-over"));
+      });
+
+      chip.addEventListener("dragover", e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        if (dragSrcZone && dragSrcZone !== zone) {
+          chip.classList.add("drag-over");
+        }
+      });
+
+      chip.addEventListener("dragleave", () => {
+        chip.classList.remove("drag-over");
+      });
+
+      chip.addEventListener("drop", e => {
+        e.preventDefault();
+        chip.classList.remove("drag-over");
+        if (!dragSrcZone || dragSrcZone === zone) return;
+
+        const zones = currentPrefs.sourceTimezones;
+        const fromIdx = zones.indexOf(dragSrcZone);
+        const toIdx = zones.indexOf(zone);
+        if (fromIdx === -1 || toIdx === -1) return;
+
+        zones.splice(fromIdx, 1);
+        zones.splice(toIdx, 0, dragSrcZone);
+        renderTimezoneChips();
+      });
 
       els.sourceTimezoneChips.appendChild(chip);
     }
