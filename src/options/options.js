@@ -30,7 +30,10 @@
     btnSave: document.getElementById("btnSave"),
     btnReset: document.getElementById("btnReset"),
     status: document.getElementById("status"),
+    privacyPolicyLink: document.getElementById("privacyPolicyLink"),
   };
+
+  const PRIVACY_POLICY_URL = "https://kokilaw.github.io/dev-clock-extention/privacy-policy.html";
 
   const LOCKED_TIMEZONES = new Set(["LOCAL"]);
 
@@ -435,6 +438,9 @@
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
+    if (els.privacyPolicyLink) {
+      els.privacyPolicyLink.href = PRIVACY_POLICY_URL;
+    }
     try {
       wireEvents();
       await load();

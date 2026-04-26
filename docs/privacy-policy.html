@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevClock – Privacy Policy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+    :root {
+      --bg-base: #0d0f12;
+      --bg-surface: #13161b;
+      --bg-raised: #1c2028;
+      --bg-hover: #232830;
+      --border: #2a2f3a;
+      --border-focus: #3d8eff;
+
+      --text-primary: #e8eaf0;
+      --text-secondary: #7a8499;
+      --text-muted: #4a5166;
+
+      --accent-blue: #3d8eff;
+      --accent-cyan: #00d4c8;
+      --accent-green: #3ddc84;
+      --accent-red: #ff5f5f;
+
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      padding: 18px;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    h1 {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .brand-accent {
+      color: var(--accent-cyan);
+    }
+
+    .sub {
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+    }
+
+    h2 {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    ul li {
+      position: relative;
+      padding-left: 14px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 6px;
+    }
+
+    ul li:last-child {
+      margin-bottom: 0;
+    }
+
+    ul li::before {
+      content: '–';
+      position: absolute;
+      left: 0;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .perm-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(42, 47, 58, 0.45);
+    }
+
+    .perm-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .perm-row:first-child {
+      padding-top: 0;
+    }
+
+    .perm-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      letter-spacing: 0.04em;
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+
+    .perm-desc {
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .lib-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(42, 47, 58, 0.45);
+    }
+
+    .lib-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .lib-row:first-child {
+      padding-top: 0;
+    }
+
+    .lib-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-blue);
+      letter-spacing: 0.04em;
+      min-width: 140px;
+      flex-shrink: 0;
+    }
+
+    .lib-desc {
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .effective-date {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      margin-top: 4px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer-link {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-raised);
+      transition: all 0.12s;
+    }
+
+    .footer-link:hover {
+      border-color: #3a4052;
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- Header -->
+    <div class="card">
+      <h1>Dev<span class="brand-accent">Clock</span> Privacy Policy</h1>
+      <p class="sub">Version 1.2.1 &nbsp;·&nbsp; DevClock Chrome Extension</p>
+      <p class="effective-date">Effective date: April 2025</p>
+    </div>
+
+    <!-- 1. Overview -->
+    <div class="card">
+      <h2>Overview</h2>
+      <p>
+        DevClock is a Chrome extension that converts timestamps between timezones and generates
+        provider-ready log query windows for engineers. It runs entirely within your browser and
+        does not communicate with any remote server. No analytics, telemetry, or tracking of any
+        kind is included.
+      </p>
+      <p>
+        This policy describes what information DevClock accesses, why it needs it, and what it
+        does with it.
+      </p>
+    </div>
+
+    <!-- 2. Data Collection -->
+    <div class="card">
+      <h2>Data Collection</h2>
+      <p>DevClock does <strong style="color: var(--text-primary);">not</strong> collect, transmit, or store any personal data outside your own browser. Specifically:</p>
+      <ul>
+        <li>No timestamps you enter are ever sent to a server.</li>
+        <li>No usage analytics or crash reports are gathered.</li>
+        <li>No browser history, tabs, or page content are accessed.</li>
+        <li>Your preferences (timezone, display format, provider) are stored locally in Chrome's
+            <code style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-cyan);">chrome.storage.sync</code>
+            API and synced by Chrome across your own signed-in devices only.</li>
+      </ul>
+      <p class="hint">All processing happens locally. The extension has no back-end and makes no outbound network requests.</p>
+    </div>
+
+    <!-- 3. Permissions -->
+    <div class="card">
+      <h2>Permissions</h2>
+      <p>The following permissions are declared in the extension manifest. Each is limited to the minimum required for the stated feature.</p>
+
+      <div class="perm-row">
+        <span class="perm-name">storage</span>
+        <span class="perm-desc">Saves your preferences (target timezone, source timezone list, query provider, display format) to Chrome's sync storage so they persist across browser restarts and devices signed in to the same Chrome profile.</span>
+      </div>
+      <div class="perm-row">
+        <span class="perm-name">clipboardRead</span>
+        <span class="perm-desc">Allows the extension to read the clipboard when you paste a timestamp into the popup input field. No clipboard content is stored or transmitted.</span>
+      </div>
+      <div class="perm-row">
+        <span class="perm-name">contextMenus</span>
+        <span class="perm-desc">Registers a right-click context menu entry so you can send a selected timestamp directly to DevClock from any web page without opening the popup manually.</span>
+      </div>
+    </div>
+
+    <!-- 4. Third-Party Libraries -->
+    <div class="card">
+      <h2>Third-Party Libraries</h2>
+      <p>
+        DevClock bundles the following open-source libraries locally. They are included as static
+        files inside the extension package and make no network requests of their own.
+      </p>
+
+      <div class="lib-row">
+        <span class="lib-name">Luxon</span>
+        <span class="lib-desc">DateTime parsing and timezone-aware formatting (DST-safe). Bundled locally as <code style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-cyan);">lib/luxon.min.js</code>. MIT license.</span>
+      </div>
+      <div class="lib-row">
+        <span class="lib-name">chrono-node</span>
+        <span class="lib-desc">Natural-language date/time parsing fallback (e.g. "next Friday 4pm", "2 hours ago"). Bundled as part of the vendor build. MIT license.</span>
+      </div>
+      <div class="lib-row">
+        <span class="lib-name">any-date-parser</span>
+        <span class="lib-desc">Log-native and loose-format date parsing fallback pipeline (Apache CLF, syslog, space-separated datetimes). Bundled as part of the vendor build. MIT license.</span>
+      </div>
+    </div>
+
+    <!-- 5. Changes to This Policy -->
+    <div class="card">
+      <h2>Changes to This Policy</h2>
+      <p>
+        If this policy is updated, the revised version will be published at this URL and the
+        effective date above will be updated. Because DevClock collects no personal data, policy
+        changes will typically only reflect updates to declared permissions or bundled libraries
+        following an extension version release.
+      </p>
+      <p>
+        You can review the full history of changes to this page in the
+        <a href="https://github.com/kokilaw/dev-clock-extention" target="_blank" rel="noopener noreferrer">GitHub repository</a>.
+      </p>
+    </div>
+
+    <!-- 6. Contact -->
+    <div class="card">
+      <h2>Contact</h2>
+      <p>
+        If you have questions about this privacy policy or DevClock's data practices, please open
+        an issue on GitHub:
+      </p>
+      <p>
+        <a href="https://github.com/kokilaw/dev-clock-extention/issues" target="_blank" rel="noopener noreferrer">
+          github.com/kokilaw/dev-clock-extention/issues
+        </a>
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="card footer">
+      <a href="../options.html" class="footer-link">← Back to Preferences</a>
+      <span class="sub">DevClock &nbsp;·&nbsp; No data collected &nbsp;·&nbsp; All processing is local</span>
+    </div>
+
+  </div>
+</body>
+</html>

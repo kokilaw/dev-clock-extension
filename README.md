@@ -1,5 +1,11 @@
 # DevClock
 
+## Privacy Policy
+
+[https://kokilaw.github.io/dev-clock-extention/privacy-policy.html](https://kokilaw.github.io/dev-clock-extention/privacy-policy.html)
+
+---
+
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
 ![BDD Tested](https://img.shields.io/badge/BDD-Cucumber-23D96C)

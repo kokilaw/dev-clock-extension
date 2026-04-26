@@ -25,6 +25,7 @@
       "description": "Open DevClock"
     }
   },
+  "homepage_url": "https://kokilaw.github.io/dev-clock-extention/privacy-policy.html",
   "permissions": [
     "storage",
     "clipboardRead",
