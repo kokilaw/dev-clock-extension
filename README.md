@@ -4,6 +4,7 @@
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
 ![BDD Tested](https://img.shields.io/badge/BDD-Cucumber-23D96C)
 ![Browser Automation](https://img.shields.io/badge/Browser%20Automation-Playwright-2EAD33?logo=playwright&logoColor=white)
+![GitHub Release](https://img.shields.io/github/v/release/kokilaw/dev-clock-extention?label=Release&color=4CAF50)
 
 DevClock is a compact Chrome extension that helps engineers convert timestamps from configurable source timezones into a configurable local target timezone and generate copy-ready query windows for multiple log providers.
 
